@@ -18,8 +18,13 @@ apostas numa base de dados SQLite.
   atualiza em tempo real (`2 € × colunas completas`). Colunas começadas mas incompletas
   ficam marcadas a laranja e não são submetidas.
 - **Botões `Limpar` e `Apostar`.** Ao carregar em Apostar sem sessão iniciada, o
-  utilizador é encaminhado para o login; depois de entrar (ou criar conta) a aposta é
-  submetida automaticamente e aparece a notificação **"Aposta submetida!"**.
+  utilizador é encaminhado para o login; depois de entrar (ou criar conta) segue para o
+  pagamento e, no fim, aparece a notificação **"Aposta submetida!"**.
+- **Pagamento simulado por MB WAY:** janela com o valor a pagar (2 € × nº de apostas),
+  os contactos para onde enviar, **cronómetro de 5 minutos** e os botões `Já paguei` e
+  `Sair`. `Já paguei` dá a aposta por paga e regista-a; `Sair` (ou o fim do tempo)
+  abandona a aposta sem a registar, mantendo o boletim preenchido para nova tentativa.
+  Nada é cobrado nem verificado — ver secção 5.
 - **Limite de 5 apostas por utilizador em cada jornada**, validado no servidor e avisado
   na interface (contador, medidor, aviso e bloqueio do botão Apostar).
 - **"As minhas apostas"**: lista das apostas já registadas pelo utilizador com sessão
@@ -208,6 +213,23 @@ http://localhost:3000 que aparecem o novo match day, as novas datas e o novo lim
 | `maxApostasPorUtilizador` | limite de apostas por pessoa em cada jornada (5)              |
 | `minimoApostas`           | mínimo para ativar o prémio (5 apostas = 10 €)                |
 | `percentagemPrizePool`    | percentagem do arrecadado que vai a prémio (90%)              |
+| `pagamento.minutos`       | minutos do cronómetro da janela de pagamento (5)              |
+| `pagamento.contactos`     | nomes e números MB WAY mostrados ao jogador                   |
+
+Os contactos de pagamento estão em `jornada.js` com **números fictícios** —
+substitui-os pelos reais antes de usar a app a sério:
+
+```js
+pagamento: {
+  metodo: 'MB WAY',
+  minutos: 5,
+  contactos: [
+    { nome: 'Ruben',     telemovel: '912 000 001' },
+    { nome: 'Mané',      telemovel: '912 000 002' },
+    { nome: 'John Mira', telemovel: '912 000 003' }
+  ]
+},
+```
 
 ---
 
@@ -248,7 +270,12 @@ esse que partilhas com os jogadores.
 - Chega folgadamente para dezenas de jogadores em simultâneo.
 
 Instalação do `cloudflared` no Windows: `winget install --id Cloudflare.cloudflared`
-(ou o `.exe` a partir do site da Cloudflare).
+(ou o `.exe` a partir do site da Cloudflare). **Já está instalado nesta máquina**, em
+`C:\Program Files (x86)\cloudflared\cloudflared.exe`.
+
+Para fechar o acesso público, basta terminar o processo do `cloudflared` (`Ctrl+C` na
+janela do túnel): o site deixa imediatamente de estar acessível de fora, sem afetar o
+`http://localhost:3000`.
 
 **Alternativa equivalente:** `ngrok`. O plano gratuito dá um endereço estático por
 conta, mas mostra uma página de aviso antes do site na primeira visita de cada
@@ -322,9 +349,28 @@ Independentemente da opção:
 
 ---
 
-## 5. Sistemas de pagamento que podes integrar *(informativo — nada implementado)*
+## 5. Pagamentos
 
-Hoje a app regista apostas, não cobra nada. Se um dia quiseres cobrar os 2 €:
+### 5.1 O que está implementado: uma simulação
+
+Depois do login, antes de a aposta ser registada, aparece uma janela de pagamento por
+MB WAY com o valor (2 € × nº de apostas), os contactos e um cronómetro de 5 minutos:
+
+- **`Já paguei`** — a aposta é considerada paga e fica registada na base de dados.
+- **`Sair`** ou **fim do tempo** — a aposta é abandonada e **não** é registada; o
+  boletim mantém-se preenchido para o jogador tentar de novo.
+
+**Não há qualquer verificação:** nada é cobrado, nada é confirmado com o MB WAY e o
+estado "pago" não é guardado na base de dados (as tabelas continuam a ser apenas
+`utilizadores` e `apostas`). Na prática, quem organiza confere os MB WAY recebidos e
+compara com a lista de apostas (`node apostas.js resumo`).
+
+Se quiseres registar o pagamento na base de dados, o caminho mais simples é acrescentar
+uma coluna `pago INTEGER DEFAULT 0` à tabela `apostas` e marcá-la no `POST /api/apostas`.
+
+### 5.2 Sistemas de pagamento reais que podes integrar *(informativo)*
+
+Se um dia quiseres cobrar mesmo os 2 €:
 
 | Solução | Métodos | Notas |
 |---|---|---|
@@ -349,8 +395,24 @@ Duas notas práticas:
 
 ---
 
-## 6. Limitações desta versão
+## 6. Repositório
 
+O código está em **https://github.com/ruben-ag-lopes/TotoFIEGSI** (privado).
+
+```bash
+git add -A
+git commit -m "descrição da alteração"
+git push
+```
+
+O ficheiro `totofiegsi.db` está no `.gitignore` — os dados dos jogadores **não** vão
+para o GitHub. A imagem de referência do talão original também fica de fora.
+
+---
+
+## 7. Limitações desta versão
+
+- O pagamento é simulado (secção 5.1): não há cobrança nem confirmação.
 - Sessões guardadas em memória: reiniciar o servidor termina as sessões.
 - Não há registo de resultados nem apuramento automático do vencedor — o cálculo de
   acertos e a divisão do prize pool ainda são feitos à mão.
