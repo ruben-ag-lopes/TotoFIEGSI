@@ -19,10 +19,10 @@ const JORNADA = {
   pagamento: {
     metodo: 'MB WAY',
     minutos: 5,                 // tempo para confirmar o pagamento
-    contactos: [                // numeros ficticios - substituir pelos reais
-      { nome: 'Ruben',      telemovel: '912 000 001' },
-      { nome: 'Mané',       telemovel: '912 000 002' },
-      { nome: 'John Mira',  telemovel: '912 000 003' }
+    contactos: [                // contactos para onde os jogadores enviam o MB WAY
+      { nome: 'Ruben',      telemovel: '925 295 306' },
+      { nome: 'Mané',       telemovel: '916 961 489' },
+      { nome: 'John Mira',  telemovel: '937 777 252' }
     ]
   },
   jogos: [
