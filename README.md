@@ -304,24 +304,8 @@ esta app. Também a Google Cloud tem uma `e2-micro` gratuita em certas regiões.
 - É a opção com mais trabalho inicial, mas a única gratuita que fica sempre no ar com
   a base de dados no formato atual.
 
-### 4.3 PaaS com plano gratuito (Render, Koyeb)
 
-Publicas com um `git push` e recebes um subdomínio com HTTPS automático.
-
-**O que implica:**
-
-- **O disco não é persistente no plano gratuito.** O `totofiegsi.db` é recriado vazio a
-  cada publicação e a cada reinício — **perdes as apostas e os utilizadores**. Para
-  usar isto a sério terias de trocar o SQLite local por uma base de dados alojada com
-  plano gratuito (**Turso**, que é SQLite na cloud e é a migração mais próxima, ou
-  **Neon**/**Supabase**, que são Postgres). São alterações localizadas no `db.js`.
-- Deixas de ter o ficheiro `.db` no teu disco para abrires no DB Browser: passas a
-  gerir a base de dados pelo painel do serviço.
-- As instâncias gratuitas **adormecem** ao fim de alguns minutos sem tráfego; a
-  primeira visita a seguir pode demorar perto de um minuto a responder.
-- Sem custos e sem administração de servidor, mas com estas três consequências.
-
-### 4.4 Comparação
+### 4.3 Comparação
 
 | Opção | Sempre no ar | SQLite atual | HTTPS | Endereço fixo | Trabalho |
 |---|---|---|---|---|---|
@@ -329,14 +313,14 @@ Publicas com um `git push` e recebes um subdomínio com HTTPS automático.
 | Oracle Always Free | sim | sim | via DuckDNS + Caddy | sim | alto (administras tudo) |
 | Render / Koyeb grátis | adormece | **não** (exige mudar de BD) | incluído | sim | médio (migrar a BD) |
 
-### 4.5 Sugestão
+### 4.4 Sugestão
 
 Para as primeiras jornadas, **o teu PC com Cloudflare Tunnel**: é gratuito, monta-se em
 minutos, mantém a base de dados contigo e não obriga a mudar nada no código. Se mais
 tarde o jogo pegar e quiseres o site sempre disponível, o passo seguinte natural é o
 VPS gratuito da Oracle — a app corre lá tal como está.
 
-### 4.6 O que mudar antes de expor na internet
+### 4.5 O que mudar antes de expor na internet
 
 Independentemente da opção:
 
