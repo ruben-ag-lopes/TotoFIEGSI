@@ -2,6 +2,7 @@
 /totofiegsi.db
 /totofiegsi.db-shm
 /totofiegsi.db-wal
+/totofiegsi.db-journal
 /jornadas/
 
 # a base de dados de exemplo (exemplo/totofiegsi.exemplo.db) VAI para o repositorio,

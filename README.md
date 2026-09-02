@@ -250,17 +250,16 @@ http://localhost:3000 que aparecem o novo match day, as novas datas e o novo lim
 | `pagamento.minutos`       | minutos do cronómetro da janela de pagamento (5)              |
 | `pagamento.contactos`     | nomes e números MB WAY mostrados ao jogador                   |
 
-Os contactos de pagamento estão em `jornada.js` com **números fictícios** —
-substitui-os pelos reais antes de usar a app a sério:
+Os contactos para onde os jogadores enviam o MB WAY estão em `jornada.js`, na secção
+`pagamento` — é aí que se acrescenta, remove ou corrige um número:
 
 ```js
 pagamento: {
   metodo: 'MB WAY',
   minutos: 5,
   contactos: [
-    { nome: 'Ruben',     telemovel: '912 000 001' },
-    { nome: 'Mané',      telemovel: '912 000 002' },
-    { nome: 'John Mira', telemovel: '912 000 003' }
+    { nome: 'Nome a mostrar', telemovel: '9XX XXX XXX' }
+    // ...
   ]
 },
 ```
