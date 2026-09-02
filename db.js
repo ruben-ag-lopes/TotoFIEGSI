@@ -4,7 +4,11 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { DatabaseSync } = require('node:sqlite');
 
-const DB_PATH = path.join(__dirname, 'totofiegsi.db');
+// Por omissao usa totofiegsi.db ao lado do codigo.
+// TOTO_DB permite apontar para outro ficheiro (ex.: a base de dados de exemplo).
+const DB_PATH = process.env.TOTO_DB
+  ? path.resolve(process.env.TOTO_DB)
+  : path.join(__dirname, 'totofiegsi.db');
 const db = new DatabaseSync(DB_PATH);
 
 // ---------------------------------------------------------------------------

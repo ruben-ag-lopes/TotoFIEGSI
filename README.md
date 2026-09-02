@@ -119,6 +119,40 @@ As passwords são guardadas com hash `scrypt`. Se preferires texto simples para
 gerires a base de dados à mão, é uma alteração de duas linhas em `db.js`
 (`hashPassword` e `verificarPassword`).
 
+### Base de dados de exemplo (para partilhar com os colegas)
+
+A base de dados **é criada automaticamente na primeira execução**: quem clonar o
+repositório só tem de correr `node server.js` e já tem as duas tabelas prontas. Não
+precisa de receber nenhum ficheiro.
+
+Para que os colegas vejam a app já com dados, há uma base de dados de exemplo
+versionada no repositório, com 5 utilizadores e 12 apostas fictícias:
+
+```bash
+# ver os dados de exemplo sem tocar na base de dados real
+TOTO_DB=exemplo/totofiegsi.exemplo.db node apostas.js
+
+# correr a app com a base de dados de exemplo (Windows PowerShell)
+$env:TOTO_DB = "exemplo\totofiegsi.exemplo.db"; node server.js
+
+# ou simplesmente usá-la como ponto de partida
+copy exemplo\totofiegsi.exemplo.db totofiegsi.db
+```
+
+A password de todas as contas de exemplo é `1234`. Para a regerar (por exemplo depois
+de mudares de jornada): `node exemplo/criar-exemplo.js`.
+
+**Porque é que o `totofiegsi.db` real não vai para o repositório?** Não é por ser
+público — o repositório é privado. É porque o SQLite é um ficheiro **binário**: se duas
+pessoas correrem a app e ambas fizerem commit do `.db`, o git não consegue juntar as
+duas versões e alguém perde as suas apostas. Além disso, tudo o que entra no histórico
+do git lá fica, incluindo os utilizadores e as passwords com hash.
+
+Se mesmo assim quiseres partilhar a base de dados real pelo repositório, basta apagar a
+linha `/totofiegsi.db` do `.gitignore` e fazer commit — combinem só que **uma única
+pessoa** é que a atualiza. Em alternativa, para uma entrega pontual, envia o ficheiro
+por outro meio (Drive, Teams) em vez de o versionar.
+
 ### Corrigir/anular apostas à mão
 
 ```sql

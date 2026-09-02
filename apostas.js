@@ -11,7 +11,8 @@
 const { DatabaseSync } = require('node:sqlite');
 const { JORNADA } = require('./jornada');
 
-const db = new DatabaseSync(require('node:path').join(__dirname, 'totofiegsi.db'));
+// usa o mesmo ficheiro que o servidor (respeita a variavel TOTO_DB)
+const db = new DatabaseSync(require('./db').DB_PATH);
 const comando = (process.argv[2] || 'tudo').toLowerCase();
 
 if (comando === 'chaves') {

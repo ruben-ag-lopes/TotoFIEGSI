@@ -1,8 +1,11 @@
-# base de dados (dados dos jogadores - nao vai para o repositorio)
-totofiegsi.db
-totofiegsi.db-shm
-totofiegsi.db-wal
-jornadas/
+# base de dados real (dados e passwords dos jogadores) - fica so na tua maquina
+/totofiegsi.db
+/totofiegsi.db-shm
+/totofiegsi.db-wal
+/jornadas/
+
+# a base de dados de exemplo (exemplo/totofiegsi.exemplo.db) VAI para o repositorio,
+# para os colegas terem dados com que experimentar
 
 # imagem de referencia do talao original
 template_exemplo_totoFIEGSI.png

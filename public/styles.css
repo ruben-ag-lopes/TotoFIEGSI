@@ -583,6 +583,10 @@ td.td-picks { text-align: center; }
   animation: entrar .15s ease-out;
 }
 
+/* sem isto o display:flex acima anula o atributo hidden e a janela
+   apareceria logo ao carregar a pagina */
+.modal-fundo[hidden] { display: none; }
+
 .modal {
   width: 100%;
   max-width: 430px;
