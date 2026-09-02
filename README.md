@@ -397,7 +397,7 @@ Se um dia quiseres cobrar mesmo os 2 €:
 | **SIBS Payment Gateway** (API Market) | MB WAY, Multibanco, cartão | Ligação direta à SIBS, sem intermediário; integração mais pesada. |
 | **Stripe** | Cartão, Apple/Google Pay, Multibanco | Excelente developer experience (Stripe Checkout resolve tudo com um redirect); comissão percentual + fixa pesa muito em pagamentos de 2 €. |
 | **PayPal** | Saldo PayPal, cartão | Rápido de integrar, muito reconhecido; comissões altas para micropagamentos. |
-| **Revolut Business / Revolut Pay** | Links de pagamento, transferência | Prático para grupos fechados; pode ser usado sem integração nenhuma. |
+| **Revolut Business / Revolut Pay** | Links de pagamento, transferência | Prático para grupos fechados; a via sem taxas está detalhada em 5.3. |
 | **MB WAY manual** | Transferência para um número | Sem integração: o organizador confere os pagamentos e marca a aposta como paga. É o mais simples para uma liga interna. |
 
 Duas notas práticas:
@@ -409,6 +409,90 @@ Duas notas práticas:
   regulada (SRIJ). Para um jogo interno entre colegas, sem lucro para o organizador,
   é habitual ficar-se pela gestão manual dos valores; se a coisa crescer ou passar a
   ter margem, vale a pena confirmar o enquadramento antes de integrar pagamentos.
+
+### 5.3 Integrar o Revolut para pagamento real, sem taxas
+
+**O ponto de partida:** no Revolut, o que é grátis são as **transferências entre contas
+Revolut**. Dinheiro recebido por *payment link* vindo de outra conta Revolut não tem
+comissão nem limite. O que tem custo é o **Revolut Pay / Merchant API** (o checkout a
+sério, integrado por API), que cobra a partir de ~0,8%–1% + ~0,02 € por transação, mais
+1,5% adicionais em cartões de fora do EEE. Numa aposta de 2 € isso são 2% a 4% do valor
+— e obriga a conta **Revolut Business**, que por sua vez exige uma entidade registada.
+
+**Conclusão: para taxa zero, o caminho não é integrar o checkout do Revolut — é usar o
+link de pagamento pessoal e automatizar apenas a conferência.** Abaixo, três níveis,
+do mais simples ao mais automático.
+
+#### Nível 1 — link de pagamento no boletim *(zero taxas, zero API)*
+
+1. Na app do Revolut: **Conta → Adicionar dinheiro → Payment link**, ou usa o teu
+   `revolut.me/<utilizador>` permanente.
+2. Guarda o link no `jornada.js`, ao lado dos contactos MB WAY:
+
+   ```js
+   pagamento: {
+     metodo: 'MB WAY / Revolut',
+     minutos: 5,
+     revolut: {
+       link: 'https://revolut.me/o-teu-utilizador',
+       referencia: 'TOTO {matchDay} {utilizador}'   // ex.: TOTO MD1 ruben
+     },
+     contactos: [ /* ... */ ]
+   },
+   ```
+
+3. Na janela de pagamento, mostrar o link (ou um QR code gerado no cliente) e a
+   **referência a escrever na descrição da transferência**. É a referência que permite
+   saber de quem veio o dinheiro.
+4. O botão `Já paguei` continua igual: quem confere és tu, na app do Revolut.
+
+**Taxas: nenhuma**, desde que o jogador pague com **saldo Revolut**. Quem pagar com
+cartão através do link entra nas regras de carregamento por cartão (limites semanais e
+mensais e eventuais comissões), por isso convém pedir expressamente "paga por Revolut,
+não por cartão".
+
+#### Nível 2 — conferência semi-automática pelo extrato *(zero taxas)*
+
+Continua tudo grátis e deixa de ser preciso conferir à mão aposta a aposta:
+
+1. Na app do Revolut: **Conta → Extrato → Excel/CSV**, para o período da jornada.
+2. Um script (por exemplo `conferir.js`) lê o CSV, extrai o nome de utilizador da
+   descrição de cada entrada e compara o valor recebido com `2 € × nº de apostas` desse
+   utilizador na tabela `apostas`.
+3. Saída: lista de quem pagou, quem falta e quem pagou a menos.
+
+Para marcar o pagamento na base de dados seria preciso uma coluna nova
+(`ALTER TABLE apostas ADD COLUMN pago INTEGER DEFAULT 0`) — hoje o estado "pago" não é
+guardado (ver 5.1).
+
+#### Nível 3 — confirmação automática pela API *(zero taxas nas transferências, mas exige conta Business)*
+
+A API que permite **ler os movimentos recebidos** é a do **Revolut Business**
+(`GET /api/1.0/transactions`, mais webhooks de transação criada, com OAuth 2.0 e
+certificado). Com ela, o servidor confirmava sozinho: chega uma transferência com a
+referência `TOTO MD1 ruben` no valor certo → a aposta fica paga, sem ninguém carregar
+em `Já paguei`.
+
+As contrapartidas:
+
+- **Exige conta Revolut Business**, que só é aberta a entidades registadas (empresa ou,
+  nalguns países, trabalhador independente). Uma conta pessoal **não tem API**.
+- As transferências recebidas de contas Revolut continuam **sem comissão**; o que custa
+  é aceitar cartões (Revolut Pay), que aqui não é preciso.
+- Contas pessoais não se destinam a cobranças comerciais — para um bolo entre colegas é
+  prática comum, mas é a diferença que justifica o salto para Business se o jogo crescer.
+
+#### Resumo
+
+| Nível | Taxas | Automatismo | Requisitos |
+|---|---|---|---|
+| 1 — link no boletim | **0** (saldo Revolut) | nenhum; confirmas tu | conta pessoal |
+| 2 — extrato CSV | **0** | conferência em lote | conta pessoal + script |
+| 3 — API Business | **0** nas transferências | total | conta Revolut Business |
+| *(Revolut Pay / Merchant API)* | 0,8%–1% + 0,02 € | total | conta Business |
+
+> Os valores e limites do Revolut mudam com frequência e variam com o plano e o país —
+> confirma na app antes de anunciares aos jogadores que não há custos.
 
 ---
 
