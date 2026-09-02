@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TotoFIEGSI &middot; Entrar</title>
+<link rel="icon" href="Logo_FIEGSI.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="marca" href="/">
+    <img src="Logo_FIEGSI.png" alt="FIEGSI">
+    <span class="marca-txt">Toto<strong>FIEGSI</strong></span>
+  </a>
+</header>
+
+<main class="login-pagina">
+  <div class="cartao-login">
+    <h1>Entrar</h1>
+    <p class="sub">Identifica-te para confirmar a tua aposta.</p>
+
+    <div id="pendente" class="pendente" hidden></div>
+
+    <div class="abas">
+      <button type="button" class="aba ativa" id="aba-entrar">Entrar</button>
+      <button type="button" class="aba" id="aba-registo">Criar conta</button>
+    </div>
+
+    <div id="erro" class="erro-form" hidden></div>
+
+    <!-- Login -->
+    <form id="form-entrar" autocomplete="on">
+      <div class="campo">
+        <label for="l-utilizador">Nome de utilizador</label>
+        <input id="l-utilizador" name="username" type="text" required autocomplete="username">
+      </div>
+      <div class="campo">
+        <label for="l-password">Password</label>
+        <input id="l-password" name="password" type="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primario btn-bloco">Entrar e apostar</button>
+    </form>
+
+    <!-- Registo -->
+    <form id="form-registo" autocomplete="on" hidden>
+      <div class="campo">
+        <label for="r-utilizador">Nome de utilizador</label>
+        <input id="r-utilizador" name="username" type="text" required autocomplete="username">
+      </div>
+      <div class="campo">
+        <label for="r-equipa">Nome da equipa</label>
+        <input id="r-equipa" name="team" type="text" required autocomplete="off">
+        <span class="ajuda">Pedido apenas no primeiro registo &mdash; fica associado &agrave; tua conta.</span>
+      </div>
+      <div class="campo">
+        <label for="r-password">Password</label>
+        <input id="r-password" name="password" type="password" required autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn btn-primario btn-bloco">Criar conta e apostar</button>
+    </form>
+
+    <a class="voltar" href="index.html">&larr; Voltar ao boletim</a>
+  </div>
+</main>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<script src="login.js"></script>
+</body>
+</html>

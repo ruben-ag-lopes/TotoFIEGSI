@@ -1,0 +1,13 @@
+# base de dados (dados dos jogadores - nao vai para o repositorio)
+totofiegsi.db
+totofiegsi.db-shm
+totofiegsi.db-wal
+jornadas/
+
+# imagem de referencia do talao original
+template_exemplo_totoFIEGSI.png
+
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

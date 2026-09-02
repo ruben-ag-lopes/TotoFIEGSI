@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TotoFIEGSI &middot; Boletim de Apostas</title>
+<link rel="icon" href="Logo_FIEGSI.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="marca" href="/">
+    <img src="Logo_FIEGSI.png" alt="FIEGSI">
+    <span class="marca-txt">Toto<strong>FIEGSI</strong></span>
+  </a>
+  <nav class="topbar-nav">
+    <span id="estado-sessao" class="sessao">&nbsp;</span>
+    <a id="btn-sair" class="link-sair" href="#" hidden>Sair</a>
+  </nav>
+</header>
+
+<main class="pagina">
+
+  <!-- Cabecalho do boletim (inspirado no talao do Totobola) -->
+  <section class="boletim-cabecalho">
+    <div class="cab-esq">
+      <img src="Logo_FIEGSI.png" alt="" class="cab-logo">
+      <div>
+        <h1 class="cab-titulo">TotoFIEGSI</h1>
+        <p class="cab-sub" id="cab-competicao">Liga dos Campe&otilde;es &middot; 2026/27</p>
+      </div>
+    </div>
+    <div class="cab-dir">
+      <p class="cab-concurso"><span id="cab-md">MATCH DAY MD1</span> &middot; <span id="cab-epoca">2026/27</span></p>
+      <p class="cab-limite" id="cab-limite">Em jogo at&eacute; &agrave;s 17H00 de 08/09/2026</p>
+      <p class="cab-total">VALOR TOTAL DA APOSTA: <strong id="valor-total">&euro; 0,00</strong></p>
+    </div>
+  </section>
+
+  <!-- Informacao da jornada -->
+  <section class="info-grid">
+    <div class="info-cartao">
+      <span class="info-rotulo">Match Day</span>
+      <span class="info-valor" id="info-md">MD1</span>
+      <span class="info-nota" id="info-epoca">&Eacute;poca 2026/27</span>
+    </div>
+    <div class="info-cartao">
+      <span class="info-rotulo">Datas dos jogos</span>
+      <span class="info-valor" id="info-datas">8 a 10 de setembro de 2026</span>
+      <span class="info-nota">10 jogos &middot; 3 dias de competi&ccedil;&atilde;o</span>
+    </div>
+    <div class="info-cartao destaque">
+      <span class="info-rotulo">Data limite de aposta</span>
+      <span class="info-valor" id="info-limite">08/09/2026 &agrave;s 17H00</span>
+      <span class="info-nota" id="info-contagem">&nbsp;</span>
+    </div>
+    <div class="info-cartao">
+      <span class="info-rotulo">Valor da aposta</span>
+      <span class="info-valor" id="info-valor">2,00 &euro;</span>
+      <span class="info-nota">por aposta (coluna) &middot; valor fixo</span>
+    </div>
+  </section>
+
+  <p class="aviso-regras">
+    Preenche <strong>um prognóstico por jogo</strong> em cada coluna &mdash; <strong>1</strong> vit&oacute;ria da casa,
+    <strong>X</strong> empate, <strong>2</strong> vit&oacute;ria do visitante. Cada coluna totalmente preenchida
+    &eacute; uma aposta de 2 &euro;. N&atilde;o s&atilde;o aceites m&uacute;ltiplos progn&oacute;sticos no mesmo jogo.
+    M&aacute;ximo de <strong id="aviso-max">5</strong> apostas por utilizador em cada jornada.
+  </p>
+
+  <!-- Boletim -->
+  <section class="tabela-wrap">
+    <table class="boletim" id="boletim">
+      <thead id="boletim-head"></thead>
+      <tbody id="boletim-body"></tbody>
+    </table>
+  </section>
+
+  <!-- Barra de accao -->
+  <section class="barra-accao">
+    <div class="resumo">
+      <span id="resumo-apostas">0 apostas preenchidas</span>
+      <strong id="resumo-total">&euro; 0,00</strong>
+    </div>
+    <div class="botoes">
+      <button type="button" id="btn-limpar" class="btn btn-secundario">Limpar</button>
+      <button type="button" id="btn-apostar" class="btn btn-primario">Apostar</button>
+    </div>
+    <p class="aviso-limite" id="aviso-limite" hidden></p>
+  </section>
+
+  <!-- Apostas ja registadas pelo utilizador -->
+  <section class="minhas-apostas" id="minhas-apostas">
+    <div class="ma-topo">
+      <h2>As minhas apostas</h2>
+      <span class="ma-contador" id="ma-contador"></span>
+    </div>
+    <div id="ma-conteudo"></div>
+  </section>
+
+  <!-- Regulamento resumido -->
+  <section class="regulamento">
+    <h2>Regulamento resumido</h2>
+    <ul>
+      <li>Valor por aposta: <strong>2 &euro;</strong> (valor fixo).</li>
+      <li>M&aacute;ximo de <strong>5 apostas por utilizador</strong> em cada jornada.</li>
+      <li>Prize pool: <strong>90%</strong> do total arrecadado na jornada.</li>
+      <li>M&iacute;nimo de <strong>5 apostas</strong> (10 &euro;) para ativar o pr&eacute;mio; caso contr&aacute;rio a jornada &eacute; cancelada e os valores devolvidos.</li>
+      <li>Ganha quem acertar mais resultados na jornada; em caso de empate, o prize pool &eacute; dividido igualmente.</li>
+      <li>Contam apenas os resultados oficiais aos <strong>90 minutos</strong> (+ descontos). Prolongamento e grandes penalidades n&atilde;o contam.</li>
+      <li>Jogo adiado ou cancelado anula a jornada e as apostas s&atilde;o reembolsadas.</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="rodape">TotoFIEGSI &middot; Liga FIEGSI 2026/27 &middot; vers&atilde;o de teste local</footer>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<!-- Janela de pagamento (simulado) -->
+<div class="modal-fundo" id="modal-pagamento" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pag-titulo">
+    <div class="modal-topo">
+      <h2 id="pag-titulo">Pagamento por <span id="pag-metodo">MB WAY</span></h2>
+      <p class="modal-sub">Para concluir a aposta, envia o valor por <span id="pag-metodo2">MB WAY</span> para um dos contactos e confirma em <strong>J&aacute; paguei</strong>.</p>
+    </div>
+
+    <div class="pag-valor">
+      <span class="pag-montante" id="pag-montante">&euro; 0,00</span>
+      <span class="pag-detalhe" id="pag-detalhe">0 apostas &times; 2,00 &euro;</span>
+    </div>
+
+    <div class="pag-cronometro">
+      <span class="pag-cron-rotulo">Tempo para confirmar</span>
+      <span class="pag-cron-tempo" id="pag-tempo">05:00</span>
+      <div class="pag-barra"><div class="pag-barra-int" id="pag-barra"></div></div>
+    </div>
+
+    <ul class="pag-contactos" id="pag-contactos"></ul>
+
+    <p class="pag-nota">Simula&ccedil;&atilde;o: nenhum pagamento &eacute; processado nem verificado.</p>
+
+    <div class="modal-botoes">
+      <button type="button" id="btn-pag-sair" class="btn btn-secundario">Sair</button>
+      <button type="button" id="btn-pag-pago" class="btn btn-primario">J&aacute; paguei</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

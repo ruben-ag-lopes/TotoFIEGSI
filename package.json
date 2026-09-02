@@ -1,0 +1,13 @@
+{
+  "name": "totofiegsi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TotoFIEGSI - boletim de apostas 1X2 da Liga dos Campeoes (FIEGSI 26/27)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
