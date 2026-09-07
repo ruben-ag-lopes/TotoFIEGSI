@@ -266,9 +266,10 @@ pagamento: {
 
 ---
 
-## 4. Opções de alojamento (sem custos)
+## 4. Opções de alojamento
 
-Só estão aqui opções que não implicam pagar nada. O critério técnico decisivo é
+Quase todas são gratuitas; a única com custo é a 4.3 (~1 €/ano pelo domínio) e está
+assinalada. O critério técnico decisivo é
 **haver disco persistente**: sem ele, o ficheiro `totofiegsi.db` desaparece a cada
 reinício ou publicação, e deixas de poder gerir a base de dados como fazes hoje.
 
@@ -338,22 +339,114 @@ esta app. Também a Google Cloud tem uma `e2-micro` gratuita em certas regiões.
   a base de dados no formato atual.
 
 
-### 4.3 Comparação
+### 4.3 Endereço fixo com domínio próprio (~1 €/ano) — para fazer mais tarde
+
+Esta é a única forma de teres um **endereço que não muda**, sem tocar no router e com a
+base de dados a viver no teu computador. Não é gratuita, mas é barata: o custo é só o
+domínio.
+
+**Porque é que o domínio é obrigatório:** o túnel *temporário* da secção 4.1 sorteia um
+endereço a cada arranque. Para um endereço fixo é preciso um túnel **nomeado**, e esse
+exige que a Cloudflare controle o DNS de um domínio teu. Subdomínios gratuitos (DuckDNS
+e afins) não servem, porque não deixam mudar os nameservers.
+
+**O que ganhas face ao túnel temporário:** endereço fixo e teu, WAF e proteção DDoS da
+Cloudflare à frente da app, e a opção do Cloudflare Access. O teu IP de casa continua
+escondido e não se abre porta nenhuma.
+
+#### Passo 1 — comprar o domínio
+
+Num registador como o Namecheap, procura um `.xyz` livre (ex.: `totofiegsi.xyz`) —
+rondam **$0,99 no primeiro ano**.
+
+> **Confirma a coluna de renovação antes de pagar.** O preço promocional é só do 1.º
+> ano; a renovação sobe tipicamente para 10–15 €/ano.
+
+Não contrates extras: sem alojamento, sem email, sem SSL pago — o certificado vem da
+Cloudflare, de graça.
+
+#### Passo 2 — pôr o domínio na Cloudflare
+
+1. Cria conta gratuita em `dash.cloudflare.com`
+2. **Add a site** → escreve o domínio → escolhe o plano **Free**
+3. A Cloudflare mostra **dois nameservers** (algo como `xxx.ns.cloudflare.com`)
+4. No registador: *Domain* → *Nameservers* → passa de "BasicDNS" para **Custom DNS** e
+   cola os dois
+5. Espera pela confirmação (minutos, por vezes algumas horas)
+
+#### Passo 3 — criar o túnel nomeado
+
+Numa consola, na pasta do projeto (`CF` é o caminho do cloudflared já instalado):
+
+```powershell
+$CF = "C:\Program Files (x86)\cloudflared\cloudflared.exe"
+
+& $CF tunnel login                                 # abre o browser para autorizares
+& $CF tunnel create totofiegsi                     # cria o tunel e o ficheiro de credenciais
+& $CF tunnel route dns totofiegsi totofiegsi.xyz   # aponta o dominio ao tunel
+```
+
+Depois cria o ficheiro `C:\Users\HP\.cloudflared\config.yml`:
+
+```yaml
+tunnel: totofiegsi
+credentials-file: C:\Users\HP\.cloudflared\<id-do-tunel>.json
+
+ingress:
+  - hostname: totofiegsi.xyz
+    service: http://localhost:3000
+  - service: http_status:404
+```
+
+E corre o túnel:
+
+```powershell
+& $CF tunnel run totofiegsi
+```
+
+#### Passo 4 — arrancar sozinho com o Windows
+
+Para deixares de depender de uma janela aberta, instala como serviço (consola **como
+administrador**):
+
+```powershell
+& $CF service install
+```
+
+O `node server.js` também tem de estar a correr — o túnel só encaminha, não serve a app.
+
+#### Opcional — Cloudflare Access (filtrar quem entra)
+
+O plano **Zero Trust gratuito** inclui o Access até **50 utilizadores**: uma camada de
+autenticação **à frente** da app, em que só emails autorizados conseguem ver a página.
+Configura-se em `dash.cloudflare.com` → *Zero Trust* → *Access* → *Applications*.
+
+O custo é atrito: cada jogador faz um código por email **antes** do login da app. Vale a
+pena se te preocupar gente aleatória tropeçar no link; caso contrário, as proteções que
+a app já tem (limite de tentativas, password de 8 caracteres, contactos só com sessão
+iniciada) chegam.
+
+> **Privacidade:** a Cloudflare termina o TLS nos servidores dela, ou seja, vê o tráfego
+> em claro. Para uma liga interna é irrelevante, mas é a diferença face ao Tailscale
+> Funnel, que termina o TLS na tua máquina.
+
+### 4.4 Comparação
 
 | Opção | Sempre no ar | SQLite atual | HTTPS | Endereço fixo | Trabalho |
 |---|---|---|---|---|---|
 | PC + Cloudflare Tunnel | não (só com o PC ligado) | sim, no teu disco | incluído | não (muda) | mínimo |
-| Oracle Always Free | sim | sim | via DuckDNS + Caddy | sim | alto (administras tudo) |
+| PC + domínio próprio (4.3) | não (só com o PC ligado) | sim, no teu disco | incluído | **sim** | médio (~1 €/ano) |
+| Oracle Always Free | sim | sim | Let's Encrypt | sim | alto (administras tudo) |
 | Render / Koyeb grátis | adormece | **não** (exige mudar de BD) | incluído | sim | médio (migrar a BD) |
 
-### 4.4 Sugestão
+### 4.5 Sugestão
 
 Para as primeiras jornadas, **o teu PC com Cloudflare Tunnel**: é gratuito, monta-se em
 minutos, mantém a base de dados contigo e não obriga a mudar nada no código. Se mais
 tarde o jogo pegar e quiseres o site sempre disponível, o passo seguinte natural é o
 VPS gratuito da Oracle — a app corre lá tal como está.
 
-### 4.5 O que mudar antes de expor na internet
+### 4.6 O que mudar antes de expor na internet
 
 Independentemente da opção:
 
