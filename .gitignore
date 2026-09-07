@@ -5,6 +5,12 @@
 /totofiegsi.db-journal
 /jornadas/
 
+# segredo do DuckDNS - nunca vai para o repositorio
+duckdns.token
+
+# registos do Caddy
+caddy.log*
+
 # a base de dados de exemplo (exemplo/totofiegsi.exemplo.db) VAI para o repositorio,
 # para os colegas terem dados com que experimentar
 

@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------------------
+#  TotoFIEGSI - Caddy trata do HTTPS e encaminha para a app em localhost:3000
+#
+#  Correr com:  caddy run --config Caddyfile
+#
+#  O Caddy pede e renova sozinho o certificado Let's Encrypt. Para isso, as
+#  portas 80 e 443 deste computador tem de estar acessiveis a partir da
+#  internet (encaminhamento de portas no router) e o totofiegsi.duckdns.org
+#  tem de apontar para o IP publico desta ligacao.
+# ---------------------------------------------------------------------------
+
+totofiegsi.duckdns.org {
+	reverse_proxy localhost:3000
+
+	encode gzip
+
+	header {
+		# nao deixar o browser adivinhar tipos de conteudo
+		X-Content-Type-Options nosniff
+		# a app nao deve ser embebida noutros sites
+		X-Frame-Options DENY
+		Referrer-Policy same-origin
+		-Server
+	}
+
+	log {
+		output file caddy.log {
+			roll_size 5MiB
+			roll_keep 3
+		}
+	}
+}

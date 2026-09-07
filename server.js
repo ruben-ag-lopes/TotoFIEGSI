@@ -21,6 +21,31 @@ function criarSessao(utilizador) {
   return token;
 }
 
+// O cookie so leva a flag Secure quando o pedido chegou por HTTPS (atras do Caddy,
+// que envia X-Forwarded-Proto). Em localhost, sem HTTPS, a flag ficaria a impedir
+// o browser de guardar o cookie e o login deixaria de funcionar.
+function porHttps(req) {
+  return (req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
+}
+
+function cookieSessao(req, token) {
+  const partes = [
+    'sid=' + token,
+    'HttpOnly',
+    'Path=/',
+    'SameSite=Lax',
+    'Max-Age=' + DURACAO_SESSAO / 1000
+  ];
+  if (porHttps(req)) partes.push('Secure');
+  return partes.join('; ');
+}
+
+function cookieVazio(req) {
+  const partes = ['sid=', 'HttpOnly', 'Path=/', 'SameSite=Lax', 'Max-Age=0'];
+  if (porHttps(req)) partes.push('Secure');
+  return partes.join('; ');
+}
+
 function sessaoDoPedido(req) {
   const cookies = Object.fromEntries(
     (req.headers.cookie || '')
@@ -137,7 +162,7 @@ const rotas = {
     db.criarUtilizador(nome, nomeEquipa, pass);
     const token = criarSessao(nome);
     json(res, 201, { utilizador: nome, equipa: nomeEquipa }, {
-      'Set-Cookie': 'sid=' + token + '; HttpOnly; Path=/; SameSite=Lax; Max-Age=' + DURACAO_SESSAO / 1000
+      'Set-Cookie': cookieSessao(req, token)
     });
   },
 
@@ -151,14 +176,14 @@ const rotas = {
     }
     const token = criarSessao(nome);
     json(res, 200, { utilizador: nome, equipa: registo.equipa }, {
-      'Set-Cookie': 'sid=' + token + '; HttpOnly; Path=/; SameSite=Lax; Max-Age=' + DURACAO_SESSAO / 1000
+      'Set-Cookie': cookieSessao(req, token)
     });
   },
 
   'POST /api/logout': async (req, res) => {
     const sessao = sessaoDoPedido(req);
     if (sessao) sessoes.delete(sessao.token);
-    json(res, 200, { ok: true }, { 'Set-Cookie': 'sid=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0' });
+    json(res, 200, { ok: true }, { 'Set-Cookie': cookieVazio(req) });
   },
 
   'POST /api/apostas': async (req, res) => {
