@@ -484,7 +484,15 @@ async function apostar() {
 /* ---------- pagamento simulado (MB WAY) ---------- */
 
 // Mostra a janela de pagamento e resolve com 'pago' | 'sair' | 'tempo'.
-function pedirPagamento(chaves) {
+async function pedirPagamento(chaves) {
+  // Os contactos so vem do servidor com sessao iniciada. Se a pagina foi carregada
+  // antes do login, recarrega os dados da jornada para os obter.
+  if (!estado.jornada.pagamento.contactos.length) {
+    try {
+      estado.jornada = await fetch('/api/jornada').then((r) => r.json());
+    } catch (_) { /* segue com o que ha */ }
+  }
+
   return new Promise((resolve) => {
     const cfg = estado.jornada.pagamento;
     const valorAposta = estado.jornada.valorAposta;

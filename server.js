@@ -9,6 +9,13 @@ const { JORNADA } = require('./jornada');
 const db = require('./db');
 
 const PORT = Number(process.env.PORT) || 3000;
+
+// Por omissao a app so aceita ligacoes do proprio computador. Os tuneis
+// (Cloudflare, Tailscale) correm aqui e ligam-se a 127.0.0.1, por isso continuam a
+// funcionar; o que deixa de acontecer e qualquer maquina da rede Wi-Fi chegar
+// directamente a app. Para servir a rede local: HOST=0.0.0.0 node server.js
+const HOST = process.env.HOST || '127.0.0.1';
+
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 // --- sessoes em memoria (chega para a v1 local) ----------------------------
@@ -46,6 +53,50 @@ function cookieVazio(req) {
   if (porHttps(req)) partes.push('Secure');
   return partes.join('; ');
 }
+
+// --- limite de tentativas de login (anti forca bruta) ----------------------
+const MAX_TENTATIVAS = 5;          // tentativas falhadas permitidas...
+const JANELA_TENTATIVAS = 60000;   // ...por minuto, para cada IP
+const tentativas = new Map();      // ip -> { contagem, inicio }
+
+function ipDoPedido(req) {
+  // atras de um tunel ou proxy, o IP real do visitante vem no X-Forwarded-For
+  const encaminhado = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return encaminhado || req.socket.remoteAddress || 'desconhecido';
+}
+
+// Devolve null se pode tentar, ou os segundos que falta esperar.
+function esperaObrigatoria(ip) {
+  const registo = tentativas.get(ip);
+  if (!registo) return null;
+
+  if (Date.now() - registo.inicio > JANELA_TENTATIVAS) {
+    tentativas.delete(ip);
+    return null;
+  }
+  if (registo.contagem < MAX_TENTATIVAS) return null;
+
+  return Math.ceil((JANELA_TENTATIVAS - (Date.now() - registo.inicio)) / 1000);
+}
+
+function registarFalha(ip) {
+  const registo = tentativas.get(ip);
+  if (!registo || Date.now() - registo.inicio > JANELA_TENTATIVAS) {
+    tentativas.set(ip, { contagem: 1, inicio: Date.now() });
+  } else {
+    registo.contagem += 1;
+  }
+}
+
+const limparFalhas = (ip) => tentativas.delete(ip);
+
+// evita que o Map cresca indefinidamente
+setInterval(() => {
+  const agora = Date.now();
+  for (const [ip, r] of tentativas) {
+    if (agora - r.inicio > JANELA_TENTATIVAS) tentativas.delete(ip);
+  }
+}, JANELA_TENTATIVAS).unref();
 
 function sessaoDoPedido(req) {
   const cookies = Object.fromEntries(
@@ -120,8 +171,18 @@ function validarChave(chave) {
 // --- API -------------------------------------------------------------------
 const rotas = {
   'GET /api/jornada': async (req, res) => {
+    const autenticado = sessaoDoPedido(req) !== null;
+
+    // Os numeros de telemovel para o MB WAY sao dados pessoais: so vao para quem
+    // tem sessao iniciada. Sem login, a lista de contactos vai vazia - o resto da
+    // jornada (jogos, datas, limite, valor) e publico.
+    const pagamento = autenticado
+      ? JORNADA.pagamento
+      : { ...JORNADA.pagamento, contactos: [] };
+
     json(res, 200, {
       ...JORNADA,
+      pagamento,
       fechada: apostasFechadas(),
       totalApostasJornada: db.totalApostas()
     });
@@ -139,6 +200,14 @@ const rotas = {
   },
 
   'POST /api/registo': async (req, res) => {
+    const ip = ipDoPedido(req);
+    const espera = esperaObrigatoria(ip);
+    if (espera !== null) {
+      return json(res, 429, {
+        erro: 'Demasiadas tentativas. Aguarda ' + espera + ' segundos e tenta de novo.'
+      }, { 'Retry-After': String(espera) });
+    }
+
     const { utilizador, equipa, password } = await lerCorpo(req);
     const nome = String(utilizador || '').trim();
     const nomeEquipa = String(equipa || '').trim();
@@ -153,8 +222,8 @@ const rotas = {
     if (nomeEquipa.length < 2) {
       return json(res, 400, { erro: 'Indica o nome da equipa.' });
     }
-    if (pass.length < 4) {
-      return json(res, 400, { erro: 'A password precisa de pelo menos 4 caracteres.' });
+    if (pass.length < 8) {
+      return json(res, 400, { erro: 'A password precisa de pelo menos 8 caracteres.' });
     }
     if (db.obterUtilizador(nome)) {
       return json(res, 409, { erro: 'Esse nome de utilizador ja existe.' });
@@ -168,13 +237,24 @@ const rotas = {
   },
 
   'POST /api/login': async (req, res) => {
+    const ip = ipDoPedido(req);
+    const espera = esperaObrigatoria(ip);
+    if (espera !== null) {
+      return json(res, 429, {
+        erro: 'Demasiadas tentativas falhadas. Aguarda ' + espera + ' segundos e tenta de novo.'
+      }, { 'Retry-After': String(espera) });
+    }
+
     const { utilizador, password } = await lerCorpo(req);
     const nome = String(utilizador || '').trim();
     const registo = db.obterUtilizador(nome);
 
     if (!registo || !db.verificarPassword(String(password || ''), registo.password)) {
+      registarFalha(ip);
+      // a mesma mensagem nos dois casos: nao revela se o utilizador existe
       return json(res, 401, { erro: 'Utilizador ou password incorretos.' });
     }
+    limparFalhas(ip);
     const token = criarSessao(nome);
     json(res, 200, { utilizador: nome, equipa: registo.equipa }, {
       'Set-Cookie': cookieSessao(req, token)
@@ -311,11 +391,12 @@ const servidor = http.createServer(async (req, res) => {
   }
 });
 
-servidor.listen(PORT, () => {
+servidor.listen(PORT, HOST, () => {
   console.log('');
   console.log('  TotoFIEGSI  ' + JORNADA.matchDay + ' | ' + JORNADA.epoca);
   console.log('  ------------------------------------------------');
   console.log('  Servidor:   http://localhost:' + PORT);
+  console.log('  A escutar:  ' + HOST + (HOST === '127.0.0.1' ? '  (so este computador)' : '  (toda a rede local)'));
   console.log('  Base dados: ' + db.DB_PATH);
   console.log('  Limite:     ' + JORNADA.limiteTexto);
   console.log('');

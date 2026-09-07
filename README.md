@@ -357,15 +357,33 @@ VPS gratuito da Oracle — a app corre lá tal como está.
 
 Independentemente da opção:
 
-1. ~~**Cookie com a flag `Secure`**~~ — **feito.** O `server.js` acrescenta `Secure` ao
-   cookie de sessão quando o pedido chega por HTTPS (deteta o cabeçalho
-   `X-Forwarded-Proto` que os proxies e túneis colocam). Em `localhost`, sem HTTPS, a
-   flag não é adicionada — se fosse, o browser recusava o cookie e o login deixava de
-   funcionar.
-2. **Sessões em memória** — hoje um reinício do servidor termina as sessões de todos.
-   Passar para um cookie assinado ou uma tabela de sessões.
-3. **Backups do `totofiegsi.db`** — pelo menos um por jornada.
-4. **Limite de tentativas de login**, para travar força bruta às passwords.
+**Já implementado:**
+
+1. **A app só escuta em `127.0.0.1`.** Antes aceitava ligações de qualquer máquina da
+   rede Wi-Fi; agora só do próprio computador. Os túneis (Cloudflare, Tailscale) correm
+   localmente e ligam-se a `127.0.0.1`, por isso continuam a funcionar. Para servir
+   deliberadamente a rede local: `HOST=0.0.0.0 node server.js`.
+2. **Limite de tentativas de login:** 5 falhas por minuto por IP, no `server.js`. À 6ª
+   devolve `429` com o tempo de espera. Não depende de nenhum serviço externo. O IP é
+   lido do `X-Forwarded-For` quando há túnel à frente.
+3. **Password mínima de 8 caracteres** (era 4).
+4. **Contactos de MB WAY só com sessão iniciada.** O `GET /api/jornada` entregava os
+   números de telemóvel a qualquer visitante; agora a lista vai vazia sem login. Os
+   jogos, datas e limites continuam públicos.
+5. **Cookie com a flag `Secure`** quando o pedido chega por HTTPS (deteta o
+   `X-Forwarded-Proto`). Em `localhost`, sem HTTPS, não é adicionada — se fosse, o
+   browser recusava o cookie e o login deixava de funcionar.
+6. **Mesma mensagem de erro** para utilizador inexistente e password errada, para não
+   revelar quem tem conta.
+
+**Por fazer:**
+
+- **Sessões em memória** — um reinício do servidor termina as sessões de todos.
+- **Backups do `totofiegsi.db`** — pelo menos um por jornada.
+- **Código de registo** — hoje qualquer pessoa com o link cria conta e mete apostas no
+  bolo. Uma palavra combinada no registo resolveria.
+- As contas criadas **antes** desta versão mantêm as passwords antigas, que podem ter
+  menos de 8 caracteres: o mínimo só se aplica a registos novos.
 
 ---
 
