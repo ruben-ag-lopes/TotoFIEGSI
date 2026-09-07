@@ -47,8 +47,6 @@ server.js      servidor HTTP + API
 db.js          acesso à base de dados e hash das passwords
 jornada.js     dados da jornada em jogo  <-- é aqui que se muda a jornada
 apostas.js     utilitário de consulta da BD pelo terminal
-duckdns.js     mantém o totofiegsi.duckdns.org a apontar para o IP certo
-Caddyfile      configuração do HTTPS (ver secção 4.3)
 public/
   index.html   landing page + boletim
   login.html   login / criar conta
@@ -60,16 +58,11 @@ totofiegsi.db  base de dados SQLite (criada na 1ª execução)
 
 ### Como correr localmente
 
-```powershell
-# terminal 1 — a aplicação
-node server.js
-
-# terminal 2 — o acesso público (endereço temporário, muda a cada arranque)
-& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --url http://localhost:3000
+```bash
+node server.js        # ou: npm start
 ```
 
-Só com o terminal 1, a app fica disponível em **http://localhost:3000** (acesso local).
-Para um endereço fixo em vez do túnel temporário, ver a secção 4.3.
+Abrir **http://localhost:3000**. Para mudar a porta: `PORT=8080 node server.js`.
 
 ### API
 
@@ -345,89 +338,32 @@ esta app. Também a Google Cloud tem uma `e2-micro` gratuita em certas regiões.
   a base de dados no formato atual.
 
 
-### 4.3 Endereço fixo: `totofiegsi.duckdns.org` *(gratuito)*
-
-O DuckDNS dá um subdomínio permanente e gratuito, que aponta para o **IP público** desta
-ligação. Ao contrário do túnel da Cloudflare, o endereço **não muda** — é sempre
-`https://totofiegsi.duckdns.org`, e não é preciso reenviar links a cada jornada.
-
-Os ficheiros necessários já estão no repositório: [`Caddyfile`](Caddyfile) (HTTPS +
-encaminhamento para a app) e [`duckdns.js`](duckdns.js) (mantém o IP atualizado).
-
-#### Passo 1 — criar o subdomínio *(só tu podes fazer)*
-
-1. Entra em **https://www.duckdns.org** com a conta GitHub, Google ou Reddit.
-2. No campo *sub domain*, escreve `totofiegsi` e carrega em **add domain**.
-3. Copia o **token** que aparece no topo da página.
-4. Na pasta do projeto, cria o ficheiro `duckdns.token` com esse token (uma linha, mais
-   nada). O `.gitignore` já o exclui — **o token nunca vai para o GitHub**.
-
-#### Passo 2 — manter o IP atualizado
-
-```bash
-node duckdns.js          # atualiza o registo agora
-node duckdns.js --ver    # só mostra o IP público, sem atualizar
-```
-
-O IP doméstico muda de tempos a tempos, por isso convém correr isto automaticamente.
-No Windows, no **Agendador de Tarefas**: nova tarefa → repetir a cada 5 minutos →
-ação `node` com o argumento `duckdns.js` e "iniciar em" a pasta do projeto.
-
-#### Passo 3 — abrir as portas no router
-
-O certificado HTTPS e o acesso de fora exigem que o teu computador esteja alcançável:
-
-- Encaminhar no router as portas **80** e **443** para o IP local deste PC (`192.168.1.174`).
-- Convém fixar esse IP local no router (reserva por MAC), senão muda e o
-  encaminhamento deixa de apontar para o sítio certo.
-- Permitir o Caddy na Firewall do Windows quando ele pedir.
-
-A tua ligação **serve para isto**: o IP público (`176.79.148.144`) é um IP real, não
-CGNAT, portanto o encaminhamento de portas funciona. Se o teu ISP mudar para CGNAT,
-esta via deixa de ser possível e a alternativa é o VPS gratuito da Oracle (4.2), onde
-o mesmo `Caddyfile` funciona tal e qual.
-
-#### Passo 4 — pôr o Caddy à frente da app
-
-```bash
-winget install CaddyServer.Caddy     # instalar (uma vez)
-
-node server.js                       # terminal 1: a app, em localhost:3000
-caddy run --config Caddyfile         # terminal 2: HTTPS em totofiegsi.duckdns.org
-```
-
-O Caddy pede e renova sozinho o certificado Let's Encrypt. A app continua a correr em
-HTTP no `localhost:3000` — quem trata do HTTPS é o Caddy, e o `server.js` já reconhece
-esse cenário (ver 4.5).
-
-> Enquanto as portas não estiverem encaminhadas, o Caddy não consegue obter o
-> certificado e fica a tentar. Nessa fase continua a usar o túnel da Cloudflare (4.1),
-> que não precisa de nada disto.
-
-### 4.4 Comparação
+### 4.3 Comparação
 
 | Opção | Sempre no ar | SQLite atual | HTTPS | Endereço fixo | Trabalho |
 |---|---|---|---|---|---|
 | PC + Cloudflare Tunnel | não (só com o PC ligado) | sim, no teu disco | incluído | não (muda) | mínimo |
-| PC + DuckDNS + Caddy | não (só com o PC ligado) | sim, no teu disco | Let's Encrypt | **sim** | médio (router) |
-| Oracle Always Free | sim | sim | Let's Encrypt | **sim** | alto (administras tudo) |
+| Oracle Always Free | sim | sim | via DuckDNS + Caddy | sim | alto (administras tudo) |
 | Render / Koyeb grátis | adormece | **não** (exige mudar de BD) | incluído | sim | médio (migrar a BD) |
 
-### 4.5 Sugestão
+### 4.4 Sugestão
 
 Para as primeiras jornadas, **o teu PC com Cloudflare Tunnel**: é gratuito, monta-se em
 minutos, mantém a base de dados contigo e não obriga a mudar nada no código. Se mais
 tarde o jogo pegar e quiseres o site sempre disponível, o passo seguinte natural é o
 VPS gratuito da Oracle — a app corre lá tal como está.
 
-### 4.6 O que mudar antes de expor na internet
+### 4.5 O que mudar antes de expor na internet
+
+Independentemente da opção:
 
 1. ~~**Cookie com a flag `Secure`**~~ — **feito.** O `server.js` acrescenta `Secure` ao
    cookie de sessão quando o pedido chega por HTTPS (deteta o cabeçalho
-   `X-Forwarded-Proto` que o Caddy envia). Em `localhost`, sem HTTPS, a flag não é
-   adicionada — se fosse, o browser recusaria o cookie e o login deixava de funcionar.
-2. **Sessões em memória** — ainda por fazer: um reinício do servidor termina as sessões
-   de todos. Passar para um cookie assinado ou uma tabela de sessões.
+   `X-Forwarded-Proto` que os proxies e túneis colocam). Em `localhost`, sem HTTPS, a
+   flag não é adicionada — se fosse, o browser recusava o cookie e o login deixava de
+   funcionar.
+2. **Sessões em memória** — hoje um reinício do servidor termina as sessões de todos.
+   Passar para um cookie assinado ou uma tabela de sessões.
 3. **Backups do `totofiegsi.db`** — pelo menos um por jornada.
 4. **Limite de tentativas de login**, para travar força bruta às passwords.
 

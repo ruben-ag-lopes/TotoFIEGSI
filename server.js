@@ -21,9 +21,10 @@ function criarSessao(utilizador) {
   return token;
 }
 
-// O cookie so leva a flag Secure quando o pedido chegou por HTTPS (atras do Caddy,
-// que envia X-Forwarded-Proto). Em localhost, sem HTTPS, a flag ficaria a impedir
-// o browser de guardar o cookie e o login deixaria de funcionar.
+// O cookie so leva a flag Secure quando o pedido chegou por HTTPS, detetado pelo
+// cabecalho X-Forwarded-Proto que qualquer proxy/tunel coloca. Em localhost, sem
+// HTTPS, a flag ficaria a impedir o browser de guardar o cookie e o login deixaria
+// de funcionar.
 function porHttps(req) {
   return (req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
 }
