@@ -93,6 +93,10 @@ function renderCabecalho() {
   $('info-limite').textContent = j.limiteTexto;
   $('info-valor').textContent = j.valorAposta.toFixed(2).replace('.', ',') + ' €';
   $('aviso-max').textContent = String(j.maxApostasPorUtilizador);
+
+  const dias = new Set(j.jogos.map((jogo) => jogo.data)).size;
+  $('info-dias-competicao').textContent = j.totalJogos + ' jogos · ' +
+    dias + (dias === 1 ? ' dia de competição' : ' dias de competição');
 }
 
 function renderTabela() {
