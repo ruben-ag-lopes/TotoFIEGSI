@@ -82,7 +82,7 @@ function cartaoResumo(j) {
   dir.appendChild(etiqueta('neutra',
     j.resultadosConhecidos + '/' + j.totalJogos + ' resultados'));
 
-  if (j.ativa && typeof j.totalApostas === 'number') {
+  if (typeof j.totalApostas === 'number') {
     dir.appendChild(etiqueta('neutra', j.totalApostas +
       (j.totalApostas === 1 ? ' aposta' : ' apostas')));
     dir.appendChild(etiqueta(j.premioAtivo ? 'ok' : 'aviso',
@@ -184,9 +184,7 @@ function blocoClassificacao(j) {
   if (!lista.length) {
     const p = document.createElement('p');
     p.className = 'ma-vazio';
-    p.textContent = j.ativa
-      ? 'Ainda não há apostas registadas nesta jornada.'
-      : 'Não ficou classificação arquivada para esta jornada.';
+    p.textContent = 'Ainda não há apostas registadas nesta jornada.';
     sec.appendChild(p);
     return sec;
   }

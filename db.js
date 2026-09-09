@@ -14,7 +14,12 @@ const db = new DatabaseSync(DB_PATH);
 // ---------------------------------------------------------------------------
 // Esquema: apenas 2 tabelas
 //   utilizadores -> utilizador (nome de utilizador), equipa (só no registo), password
-//   apostas      -> utilizador + chave da aposta separada por ';'  (ex: 1;2;x;1;1;2;2;x;x;1)
+//   apostas      -> utilizador + jornada (matchDay) + chave da aposta separada
+//                   por ';'  (ex: 1;2;x;1;1;2;2;x;x;1)
+//
+// As apostas de todas as jornadas ficam sempre na tabela: a coluna `jornada`
+// e' o que as distingue. Nunca e' preciso apagar apostas para abrir a jornada
+// seguinte - basta que o boletim passe a apontar para outro matchDay.
 // ---------------------------------------------------------------------------
 db.exec(`
   CREATE TABLE IF NOT EXISTS utilizadores (
@@ -26,9 +31,20 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS apostas (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     utilizador TEXT NOT NULL REFERENCES utilizadores(utilizador),
+    jornada    TEXT NOT NULL,
     chave      TEXT NOT NULL
   );
 `);
+
+// Migracao: bases de dados criadas antes de existir a coluna `jornada` nao a
+// tem. Todas as apostas que ja existissem nessa altura eram da MD1 (a unica
+// jornada que a app teve ate aqui), por isso e' o valor correto a atribuir-lhes.
+const temColunaJornada = db.prepare("PRAGMA table_info(apostas)").all()
+  .some((coluna) => coluna.name === 'jornada');
+
+if (!temColunaJornada) {
+  db.exec("ALTER TABLE apostas ADD COLUMN jornada TEXT NOT NULL DEFAULT 'MD1'");
+}
 
 // --- passwords (scrypt) ----------------------------------------------------
 function hashPassword(password) {
@@ -57,12 +73,14 @@ function criarUtilizador(utilizador, equipa, password) {
   return { utilizador, equipa };
 }
 
-// --- apostas ---------------------------------------------------------------
-function inserirApostas(utilizador, chaves) {
-  const stmt = db.prepare('INSERT INTO apostas (utilizador, chave) VALUES (?, ?)');
+// --- apostas -----------------------------------------------------------
+// Todas as funcoes de apostas trabalham sobre uma jornada (matchDay). Isto
+// permite que o historico de jornadas passadas fique sempre na base de dados.
+function inserirApostas(utilizador, jornada, chaves) {
+  const stmt = db.prepare('INSERT INTO apostas (utilizador, jornada, chave) VALUES (?, ?, ?)');
   db.exec('BEGIN');
   try {
-    for (const chave of chaves) stmt.run(utilizador, chave);
+    for (const chave of chaves) stmt.run(utilizador, jornada, chave);
     db.exec('COMMIT');
   } catch (err) {
     db.exec('ROLLBACK');
@@ -71,19 +89,33 @@ function inserirApostas(utilizador, chaves) {
   return chaves.length;
 }
 
-function apostasDoUtilizador(utilizador) {
-  return db.prepare('SELECT id, chave FROM apostas WHERE utilizador = ? ORDER BY id').all(utilizador);
+function apostasDoUtilizador(utilizador, jornada) {
+  return db.prepare(
+    'SELECT id, chave FROM apostas WHERE utilizador = ? AND jornada = ? ORDER BY id'
+  ).all(utilizador, jornada);
 }
 
-function todasAsApostas() {
-  return db.prepare('SELECT id, utilizador, chave FROM apostas ORDER BY id').all();
+// Sem `jornada`, devolve as apostas de todas as jornadas.
+function todasAsApostas(jornada) {
+  if (jornada) {
+    return db.prepare(
+      'SELECT id, utilizador, jornada, chave FROM apostas WHERE jornada = ? ORDER BY id'
+    ).all(jornada);
+  }
+  return db.prepare('SELECT id, utilizador, jornada, chave FROM apostas ORDER BY id').all();
 }
 
-function contarApostasDoUtilizador(utilizador) {
-  return db.prepare('SELECT COUNT(*) AS n FROM apostas WHERE utilizador = ?').get(utilizador).n;
+function contarApostasDoUtilizador(utilizador, jornada) {
+  return db.prepare(
+    'SELECT COUNT(*) AS n FROM apostas WHERE utilizador = ? AND jornada = ?'
+  ).get(utilizador, jornada).n;
 }
 
-function totalApostas() {
+// Sem `jornada`, conta as apostas de todas as jornadas.
+function totalApostas(jornada) {
+  if (jornada) {
+    return db.prepare('SELECT COUNT(*) AS n FROM apostas WHERE jornada = ?').get(jornada).n;
+  }
   return db.prepare('SELECT COUNT(*) AS n FROM apostas').get().n;
 }
 

@@ -185,37 +185,18 @@ const rotas = {
       ...JORNADA,
       pagamento,
       fechada: apostasFechadas(),
-      totalApostasJornada: db.totalApostas()
+      totalApostasJornada: db.totalApostas(JORNADA.matchDay)
     });
   },
 
-  // Historico de jornadas: jogos e resultados. Para a jornada ativa junta a
-  // classificacao calculada a partir das apostas que estao na base de dados;
-  // para as jornadas fechadas usa a classificacao arquivada em jornadas.js.
+  // Historico de jornadas: jogos, resultados e classificacao. As apostas de
+  // todas as jornadas (presentes e passadas) ficam na base de dados, marcadas
+  // com o matchDay a que pertencem - por isso a classificacao de qualquer
+  // jornada, mesmo ja fechada, e calculada aqui ao vivo a partir da BD.
   'GET /api/jornadas': async (req, res) => {
     const jornadas = todasAsJornadas().map((j) => {
-      const base = {
-        matchDay: j.matchDay,
-        epoca: j.epoca,
-        competicao: j.competicao,
-        ativa: !!j.ativa,
-        periodo: j.periodo,
-        limiteTexto: j.limiteTexto,
-        limiteISO: j.limiteISO,
-        valorAposta: j.valorAposta,
-        percentagemPrizePool: j.percentagemPrizePool,
-        minimoApostas: j.minimoApostas,
-        totalJogos: j.totalJogos,
-        resultadosConhecidos: j.resultadosConhecidos,
-        jogos: j.jogos
-      };
+      const apostas = db.todasAsApostas(j.matchDay);
 
-      if (!j.ativa) {
-        return { ...base, classificacao: j.classificacao || [] };
-      }
-
-      // jornada ativa: calcula ao vivo a partir da BD
-      const apostas = db.todasAsApostas();
       const classificacao = apostas
         .map((a) => {
           const u = db.obterUtilizador(a.utilizador);
@@ -232,7 +213,19 @@ const rotas = {
       const arrecadado = totalApostas * j.valorAposta;
 
       return {
-        ...base,
+        matchDay: j.matchDay,
+        epoca: j.epoca,
+        competicao: j.competicao,
+        ativa: !!j.ativa,
+        periodo: j.periodo,
+        limiteTexto: j.limiteTexto,
+        limiteISO: j.limiteISO,
+        valorAposta: j.valorAposta,
+        percentagemPrizePool: j.percentagemPrizePool,
+        minimoApostas: j.minimoApostas,
+        totalJogos: j.totalJogos,
+        resultadosConhecidos: j.resultadosConhecidos,
+        jogos: j.jogos,
         classificacao,
         totalApostas,
         arrecadado,
@@ -341,7 +334,7 @@ const rotas = {
     }
 
     // limite de apostas por utilizador nesta jornada
-    const jaRegistadas = db.contarApostasDoUtilizador(sessao.utilizador);
+    const jaRegistadas = db.contarApostasDoUtilizador(sessao.utilizador, JORNADA.matchDay);
     const restantes = JORNADA.maxApostasPorUtilizador - jaRegistadas;
     if (restantes <= 0) {
       return json(res, 409, {
@@ -376,7 +369,7 @@ const rotas = {
       validas.push(ok);
     }
 
-    db.inserirApostas(sessao.utilizador, validas);
+    db.inserirApostas(sessao.utilizador, JORNADA.matchDay, validas);
     json(res, 201, {
       ok: true,
       utilizador: sessao.utilizador,
@@ -392,7 +385,7 @@ const rotas = {
   'GET /api/minhas-apostas': async (req, res) => {
     const sessao = sessaoDoPedido(req);
     if (!sessao) return json(res, 401, { erro: 'Sem sessao iniciada.' });
-    const apostas = db.apostasDoUtilizador(sessao.utilizador);
+    const apostas = db.apostasDoUtilizador(sessao.utilizador, JORNADA.matchDay);
     json(res, 200, {
       utilizador: sessao.utilizador,
       apostas: apostas.map((a) => ({ id: a.id, chave: a.chave, prognosticos: a.chave.split(';') })),

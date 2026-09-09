@@ -7,7 +7,7 @@
  *
  *   node exemplo/criar-exemplo.js
  *
- * A password de todas as contas de exemplo e "1234".
+ * A password de todas as contas de exemplo e "toto1234".
  */
 
 const fs = require('node:fs');
@@ -23,30 +23,24 @@ if (fs.existsSync(DESTINO)) fs.unlinkSync(DESTINO);
 const db = require('../db');
 const { JORNADA } = require('../jornada');
 
+// Uma aposta por jogador, como o jogo funciona (ver README, secção 1).
 const UTILIZADORES = [
-  { utilizador: 'ruben',    equipa: 'Os Bytes FC' },
-  { utilizador: 'mane',     equipa: 'Sporting das Redes' },
-  { utilizador: 'johnmira', equipa: 'Atletico Kernel' },
-  { utilizador: 'ana',      equipa: 'GestINF United' },
-  { utilizador: 'tiago',    equipa: 'Deportivo Debug' }
+  { utilizador: 'ruben',    equipa: 'Os Bytes FC',          chave: '1;2;x;1;1;2;2;x;x;1' },
+  { utilizador: 'mane',     equipa: 'Sporting das Redes',   chave: '2;x;1;1;1;2;1;x;2;1' },
+  { utilizador: 'johnmira', equipa: 'Atletico Kernel',      chave: '1;1;x;2;1;2;2;x;1;1' },
+  { utilizador: 'ana',      equipa: 'GestINF United',       chave: 'x;x;1;1;2;1;2;2;x;1' },
+  { utilizador: 'tiago',    equipa: 'Deportivo Debug',      chave: '1;2;2;1;1;2;x;x;1;1' }
 ];
 
-const APOSTAS = {
-  ruben:    ['1;2;x;1;1;2;2;x;x;1', '1;1;1;1;1;2;2;x;2;1', 'x;2;1;1;1;1;2;x;x;1'],
-  mane:     ['2;x;1;1;1;2;1;x;2;1', '1;2;1;x;1;2;2;1;x;1'],
-  johnmira: ['1;1;x;2;1;2;2;x;1;1'],
-  ana:      ['x;x;1;1;2;1;2;2;x;1', '1;2;x;1;1;2;2;x;x;2', '2;1;1;1;1;1;1;x;x;1', '1;x;x;1;2;2;2;1;x;1'],
-  tiago:    ['1;2;2;1;1;2;x;x;1;1', '2;2;x;1;1;1;2;x;x;1']
-};
-
 for (const u of UTILIZADORES) {
-  db.criarUtilizador(u.utilizador, u.equipa, '1234');
-  db.inserirApostas(u.utilizador, APOSTAS[u.utilizador]);
+  db.criarUtilizador(u.utilizador, u.equipa, 'toto1234');
+  db.inserirApostas(u.utilizador, JORNADA.matchDay, [u.chave]);
 }
 
-const total = db.totalApostas();
+const total = db.totalApostas(JORNADA.matchDay);
 console.log('Base de dados de exemplo criada em: ' + DESTINO);
-console.log('Utilizadores: ' + UTILIZADORES.length + ' (password de todos: 1234)');
-console.log('Apostas: ' + total + ' = ' + (total * JORNADA.valorAposta).toFixed(2) + ' EUR arrecadados');
+console.log('Utilizadores: ' + UTILIZADORES.length + ' (password de todos: toto1234)');
+console.log('Apostas em ' + JORNADA.matchDay + ': ' + total + ' = ' +
+  (total * JORNADA.valorAposta).toFixed(2) + ' EUR arrecadados');
 console.log('Prize pool (' + JORNADA.percentagemPrizePool + '%): ' +
   (total * JORNADA.valorAposta * JORNADA.percentagemPrizePool / 100).toFixed(2) + ' EUR');

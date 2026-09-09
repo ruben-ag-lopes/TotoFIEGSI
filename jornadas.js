@@ -3,6 +3,11 @@
 /*
  * Todas as jornadas do TotoFIEGSI, presentes e passadas.
  *
+ * As apostas de cada jornada ficam sempre na base de dados (tabela `apostas`,
+ * coluna `jornada`), por isso a classificacao de qualquer match day - mesmo
+ * ja fechado - e calculada ao vivo a partir da BD. Nao ha nada para arquivar
+ * nem para apagar.
+ *
  * Para abrir uma nova jornada:
  *   1. poe  ativa: false  na jornada atual e preenche os resultados
  *   2. acrescenta a nova ao fim do array, com  ativa: true
@@ -53,10 +58,7 @@ const JORNADAS = [
       { n:  8, casa: 'Lille',             fora: 'Real Betis',        data: '2026-09-09', hora: '20:00', dia: 'Qua', resultado: null },
       { n:  9, casa: 'Napoli',            fora: 'Arsenal',           data: '2026-09-10', hora: '20:00', dia: 'Qui', resultado: null },
       { n: 10, casa: 'Bayern Munich',     fora: 'Bodø/Glimt',        data: '2026-09-10', hora: '20:00', dia: 'Qui', resultado: null }
-    ],
-    // Preenchido com "node arquivar.js" quando a jornada fecha, para a
-    // classificacao ficar guardada depois de as apostas saírem da BD.
-    classificacao: null
+    ]
   }
 ];
 

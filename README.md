@@ -47,7 +47,6 @@ server.js       servidor HTTP + API
 db.js           acesso à base de dados e hash das passwords
 jornadas.js     TODAS as jornadas: jogos e resultados  <-- é aqui que se muda tudo
 jornada.js      atalho para a jornada com ativa: true
-arquivar.js     arquiva a classificação antes de fechar uma jornada
 apostas.js      utilitário de consulta da BD pelo terminal
 public/
   index.html    landing page + boletim
@@ -97,9 +96,15 @@ CREATE TABLE utilizadores (
 CREATE TABLE apostas (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   utilizador TEXT NOT NULL REFERENCES utilizadores(utilizador),
+  jornada    TEXT NOT NULL,      -- match day a que a aposta pertence (ex.: 'MD1')
   chave      TEXT NOT NULL       -- 10 prognósticos separados por ';'
 );
 ```
+
+A coluna `jornada` é o que permite manter **todo o histórico na base de dados**: as
+apostas de uma jornada fechada nunca são apagadas, só deixam de ser a jornada em jogo.
+É por isso que a página Jornadas mostra a classificação de qualquer match day, mesmo
+anos depois de ter fechado.
 
 Cada aposta é uma linha, no formato combinado:
 
@@ -107,13 +112,23 @@ Cada aposta é uma linha, no formato combinado:
 user123   1;2;x;1;1;2;2;x;x;1
 ```
 
+(o `jornada` é uma coluna à parte — este formato refere-se só ao par utilizador/chave)
+
 Consultas pelo terminal:
 
 ```bash
-node apostas.js           # utilizadores e apostas
-node apostas.js resumo    # apostas por utilizador + prize pool (90%)
-node apostas.js chaves    # "utilizador chave", uma linha por aposta
+node apostas.js               # utilizadores e apostas de TODAS as jornadas
+node apostas.js resumo        # apostas + prize pool da jornada ativa
+node apostas.js resumo MD1    # o mesmo, para uma jornada específica
+node apostas.js chaves        # "utilizador chave" da jornada ativa
+node apostas.js chaves MD1    # o mesmo, para uma jornada específica
 ```
+
+**Se já tinhas a app instalada antes desta funcionalidade:** ao arrancar o servidor,
+o `db.js` deteta que a tabela `apostas` ainda não tem a coluna `jornada` e acrescenta-a
+sozinho, atribuindo `'MD1'` às apostas que já lá estavam (a única jornada que existiu
+até agora). Não precisas de fazer nada — mas convém guardares uma cópia do
+`totofiegsi.db` antes de atualizares, como em qualquer alteração à base de dados.
 
 Para gestão manual serve qualquer cliente SQLite (DB Browser for SQLite, extensão
 SQLite do VS Code, `sqlite3` na linha de comandos). O ficheiro está em modo de
@@ -131,7 +146,7 @@ repositório só tem de correr `node server.js` e já tem as duas tabelas pronta
 precisa de receber nenhum ficheiro.
 
 Para que os colegas vejam a app já com dados, há uma base de dados de exemplo
-versionada no repositório, com 5 utilizadores e 12 apostas fictícias:
+versionada no repositório, com 5 utilizadores e 5 apostas fictícias na MD1:
 
 ```bash
 # ver os dados de exemplo sem tocar na base de dados real
@@ -144,8 +159,8 @@ $env:TOTO_DB = "exemplo\totofiegsi.exemplo.db"; node server.js
 copy exemplo\totofiegsi.exemplo.db totofiegsi.db
 ```
 
-A password de todas as contas de exemplo é `1234`. Para a regerar (por exemplo depois
-de mudares de jornada): `node exemplo/criar-exemplo.js`.
+A password de todas as contas de exemplo é `toto1234`. Para a regerar:
+`node exemplo/criar-exemplo.js`.
 
 **Porque é que o `totofiegsi.db` real não vai para o repositório?** Não é por ser
 público — o repositório é privado. É porque o SQLite é um ficheiro **binário**: se duas
@@ -164,11 +179,12 @@ por outro meio (Drive, Teams) em vez de o versionar.
 -- apagar uma aposta específica
 DELETE FROM apostas WHERE id = 12;
 
--- apagar todas as apostas de um utilizador
-DELETE FROM apostas WHERE utilizador = 'user123';
+-- apagar todas as apostas de um utilizador numa jornada
+DELETE FROM apostas WHERE utilizador = 'user123' AND jornada = 'MD1';
 
--- ver quem está no limite
-SELECT utilizador, COUNT(*) AS apostas FROM apostas GROUP BY utilizador ORDER BY 2 DESC;
+-- ver quantas apostas cada jogador tem, por jornada
+SELECT jornada, utilizador, COUNT(*) AS apostas
+FROM apostas GROUP BY jornada, utilizador ORDER BY jornada, apostas DESC;
 ```
 
 ---
@@ -179,9 +195,15 @@ Toda a informação das jornadas está em **[jornadas.js](jornadas.js)** — pre
 passadas, com os jogos e os resultados. O `jornada.js` é apenas um atalho para a
 jornada que tem `ativa: true`.
 
+As apostas de **todas** as jornadas ficam sempre na base de dados, marcadas com o
+match day a que pertencem (coluna `jornada` da tabela `apostas` — ver secção 2). Por
+isso o histórico nunca se perde e **nunca é preciso apagar apostas** para abrir a
+jornada seguinte.
+
 A página **Jornadas** (no menu do topo) mostra, para cada match day: os jogos, os
 resultados oficiais e a classificação dos jogadores, com cada prognóstico marcado a
-verde (acertou) ou vermelho (falhou).
+verde (acertou) ou vermelho (falhou). Funciona tanto para a jornada em curso como para
+qualquer jornada já fechada.
 
 ### 3.1 Lançar os resultados
 
@@ -192,28 +214,20 @@ casa, `'x'` empate, `'2'` vitória do visitante. Fica `null` enquanto não se so
 { n: 1, casa: 'Porto', fora: 'Manchester City', data: '2026-09-08', hora: '20:00', dia: 'Ter', resultado: '1' },
 ```
 
-Reinicia o servidor e a classificação aparece calculada na página Jornadas. Enquanto a
-jornada está `ativa`, os acertos são calculados **ao vivo** a partir das apostas que
-estão na base de dados.
+Reinicia o servidor e a classificação aparece calculada na página Jornadas — para
+qualquer jornada, a qualquer momento, a partir das apostas guardadas na base de dados.
 
 ### 3.2 Fechar uma jornada e abrir a seguinte
 
-A tabela `apostas` não guarda a que jornada pertence cada aposta, por isso a
-classificação tem de ser **arquivada** antes de se limparem as apostas.
+**1) Preenche todos os resultados** da jornada que está a fechar, em `jornadas.js`.
 
-**1) Preenche todos os resultados** da jornada em `jornadas.js`.
-
-**2) Confere e arquiva a classificação:**
+**2) Confirma a classificação e o vencedor** na página Jornadas, ou pelo terminal:
 
 ```bash
-node arquivar.js            # mostra a classificação e o vencedor, sem gravar
-node arquivar.js --gravar   # escreve-a em jornadas.js (guarda cópia em .bak)
+node apostas.js resumo MD1
 ```
 
-O script diz também quem ganhou e quanto recebe, já com a divisão em caso de empate e
-o aviso se não se atingiu o mínimo de apostas.
-
-**3) Fecha a jornada e abre a próxima** em `jornadas.js`:
+**3) Fecha a jornada e abre a próxima**, editando `jornadas.js`:
 
 ```js
 const JORNADAS = [
@@ -221,7 +235,6 @@ const JORNADAS = [
     matchDay: 'MD1',
     ativa: false,              // <- deixa de ser a jornada em jogo
     // ... jogos com os resultados preenchidos
-    classificacao: [ /* gravada pelo arquivar.js */ ]
   },
   {
     matchDay: 'MD2',           // <- a nova
@@ -232,21 +245,17 @@ const JORNADAS = [
     jogos: [
       { n: 1, casa: 'Equipa A', fora: 'Equipa B', data: '2026-09-29', hora: '20:00', dia: 'Ter', resultado: null },
       // ... exatamente 10 jogos, numerados de 1 a 10
-    ],
-    classificacao: null
+    ]
   }
 ];
 ```
 
-**4) Limpa as apostas** da jornada anterior:
+**4) Reinicia o servidor** e confirma o novo match day no boletim.
 
-```bash
-node -e "const {DatabaseSync}=require('node:sqlite');new DatabaseSync('./totofiegsi.db').exec('DELETE FROM apostas')"
-```
-
-Os utilizadores mantêm-se — não é preciso voltarem a registar-se.
-
-**5) Reinicia o servidor** e confirma o novo match day no boletim.
+Não há mais passos. Os utilizadores mantêm-se, as apostas da MD1 continuam na base de
+dados e continuam visíveis (e corretamente contabilizadas) na página Jornadas; cada
+jogador pode voltar a apostar, agora na MD2 — o limite de uma aposta é **por jornada**,
+não vitalício.
 
 ### 3.3 Regras a respeitar nos jogos
 
@@ -256,6 +265,8 @@ Os utilizadores mantêm-se — não é preciso voltarem a registar-se.
 - `limiteISO` é a data/hora a que as apostas fecham (por norma, 17H30 do dia do
   primeiro jogo). `limiteTexto` é só o texto apresentado; convém manterem-se coerentes.
 - Os jogos são agrupados visualmente por dia: basta estarem ordenados por data.
+- **`matchDay` tem de ser único** entre todas as jornadas do array — é o que liga cada
+  aposta guardada à jornada correta.
 
 ### 3.4 Definições comuns a todas as jornadas
 
@@ -274,11 +285,9 @@ Ficam no objeto `CONFIG`, no topo de `jornadas.js`:
 ### 3.5 Checklist rápida
 
 - [ ] resultados da jornada anterior preenchidos
-- [ ] `node arquivar.js --gravar` corrido
 - [ ] jornada anterior com `ativa: false`
-- [ ] nova jornada com 10 jogos, `ativa: true` e `classificacao: null`
+- [ ] nova jornada com 10 jogos, `ativa: true` e `matchDay` único
 - [ ] `limiteISO` e `limiteTexto` coerentes
-- [ ] apostas antigas apagadas da base de dados
 - [ ] servidor reiniciado e página verificada
 
 ---
