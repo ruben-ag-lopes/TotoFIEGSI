@@ -110,7 +110,8 @@ function renderTabela() {
     const th = document.createElement('th');
     th.className = 'th-coluna';
     th.dataset.coluna = String(c);
-    th.innerHTML = '<span class="col-num">Aposta ' + (c + 1) +
+    const titulo = j.colunas === 1 ? 'A tua aposta' : 'Aposta ' + (c + 1);
+    th.innerHTML = '<span class="col-num">' + titulo +
       '</span><span class="col-estado">&mdash;</span>';
     trh.appendChild(th);
   }
@@ -208,9 +209,16 @@ function atualizarTotais() {
   const total = completas * estado.jornada.valorAposta;
   $('valor-total').textContent = euros(total);
   $('resumo-total').textContent = euros(total);
-  $('resumo-apostas').textContent = completas === 1
-    ? '1 aposta preenchida'
-    : completas + ' apostas preenchidas';
+  if (estado.jornada.colunas === 1) {
+    const preenchidos = estado.grelha[0].filter((p) => p !== null).length;
+    $('resumo-apostas').textContent = completas
+      ? 'Boletim completo · 1 aposta'
+      : 'Boletim incompleto · ' + preenchidos + '/' + estado.jornada.totalJogos + ' jogos';
+  } else {
+    $('resumo-apostas').textContent = completas === 1
+      ? '1 aposta preenchida'
+      : completas + ' apostas preenchidas';
+  }
 
   avisarLimite(completas);
 }
@@ -231,8 +239,9 @@ function avisarLimite(completas) {
 
   if (m.restantes <= 0) {
     aviso.hidden = false;
-    aviso.textContent = 'Atingiste o limite de ' + m.limite +
-      ' apostas nesta jornada. Não é possível registar mais.';
+    aviso.textContent = m.limite === 1
+      ? 'Já tens a tua aposta registada nesta jornada. Só é permitida uma por jogador.'
+      : 'Atingiste o limite de ' + m.limite + ' apostas nesta jornada. Não é possível registar mais.';
     botao.disabled = true;
   } else if (completas > m.restantes) {
     aviso.hidden = false;
@@ -284,22 +293,30 @@ function renderMinhasApostas() {
   const m = estado.minhas;
 
   // contador + medidor de apostas usadas
-  contador.append(document.createTextNode(''));
   const forte = document.createElement('strong');
-  forte.textContent = m.registadas + ' de ' + m.limite;
-  contador.append(forte, ' apostas usadas · ' +
-    (m.restantes > 0 ? 'restam ' + m.restantes : 'limite atingido') +
-    ' · total ' + euros(m.valorTotal));
+  if (m.limite === 1) {
+    forte.textContent = m.registadas ? 'Aposta registada' : 'Sem aposta';
+    contador.append(forte, m.registadas
+      ? ' · ' + euros(m.valorTotal) + ' · uma aposta por jornada'
+      : ' · uma aposta por jornada');
+  } else {
+    forte.textContent = m.registadas + ' de ' + m.limite;
+    contador.append(forte, ' apostas usadas · ' +
+      (m.restantes > 0 ? 'restam ' + m.restantes : 'limite atingido') +
+      ' · total ' + euros(m.valorTotal));
+  }
   if (m.restantes === 0) contador.classList.add('esgotado');
 
-  const medidor = document.createElement('span');
-  medidor.className = 'ma-medidor';
-  for (let i = 0; i < m.limite; i++) {
-    const slot = document.createElement('span');
-    slot.className = 'ma-slot' + (i < m.registadas ? ' usado' : '');
-    medidor.appendChild(slot);
+  if (m.limite > 1) {
+    const medidor = document.createElement('span');
+    medidor.className = 'ma-medidor';
+    for (let i = 0; i < m.limite; i++) {
+      const slot = document.createElement('span');
+      slot.className = 'ma-slot' + (i < m.registadas ? ' usado' : '');
+      medidor.appendChild(slot);
+    }
+    contador.appendChild(medidor);
   }
-  contador.appendChild(medidor);
 
   if (!m.apostas.length) {
     const p = document.createElement('p');
@@ -334,7 +351,7 @@ function renderMinhasApostas() {
 
     const etq = document.createElement('span');
     etq.className = 'ma-etq';
-    etq.textContent = 'Aposta #' + (i + 1);
+    etq.textContent = m.limite === 1 ? 'A tua aposta' : 'Aposta #' + (i + 1);
     etq.title = 'Registo nº ' + aposta.id;
     linha.appendChild(etq);
 

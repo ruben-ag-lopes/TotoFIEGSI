@@ -11,24 +11,24 @@ apostas numa base de dados SQLite.
 ### O que faz
 
 - **Landing page com o boletim** (`/`) no estilo do talão do Totobola: os 10 jogos da
-  jornada em linha, com data e hora, e 5 colunas de aposta com as opções `1` / `X` / `2`.
-- **Um prognóstico por jogo em cada coluna** — clicar noutro símbolo troca a escolha,
-  clicar no mesmo desmarca. Não existem múltiplos prognósticos.
-- **Cada coluna completa = 1 aposta = 2 €.** O total no cabeçalho e na barra inferior
-  atualiza em tempo real (`2 € × colunas completas`). Colunas começadas mas incompletas
-  ficam marcadas a laranja e não são submetidas.
+  jornada em linha, com data e hora, e as opções `1` / `X` / `2` para cada um.
+- **Um prognóstico por jogo** — clicar noutro símbolo troca a escolha, clicar no mesmo
+  desmarca. Não existem múltiplos prognósticos.
+- **Uma aposta por jogador em cada jornada**, no valor fixo de **2 €**, validada no
+  servidor. O boletim só é submetido com os 10 jogos preenchidos.
+- **Página Jornadas**: os jogos de cada match day, os resultados oficiais e a
+  classificação dos jogadores, com cada prognóstico marcado a verde ou vermelho.
 - **Botões `Limpar` e `Apostar`.** Ao carregar em Apostar sem sessão iniciada, o
   utilizador é encaminhado para o login; depois de entrar (ou criar conta) segue para o
   pagamento e, no fim, aparece a notificação **"Aposta submetida!"**.
-- **Pagamento simulado por MB WAY:** janela com o valor a pagar (2 € × nº de apostas),
+- **Pagamento simulado por MB WAY:** janela com o valor a pagar,
   os contactos para onde enviar, **cronómetro de 5 minutos** e os botões `Já paguei` e
   `Sair`. `Já paguei` dá a aposta por paga e regista-a; `Sair` (ou o fim do tempo)
   abandona a aposta sem a registar, mantendo o boletim preenchido para nova tentativa.
   Nada é cobrado nem verificado — ver secção 5.
-- **Limite de 5 apostas por utilizador em cada jornada**, validado no servidor e avisado
-  na interface (contador, medidor, aviso e bloqueio do botão Apostar).
-- **"As minhas apostas"**: lista das apostas já registadas pelo utilizador com sessão
-  iniciada, prognóstico a prognóstico, valor de cada uma e quantas ainda pode fazer.
+- **"As minhas apostas"**: a aposta já registada pelo utilizador com sessão iniciada,
+  prognóstico a prognóstico. Quem já apostou vê o botão bloqueado, com o aviso de que
+  só é permitida uma aposta por jornada.
 - **Informação da jornada** em destaque: match day, datas dos jogos, data limite de
   aposta (com contagem decrescente), valor da aposta e regulamento resumido.
 - O boletim em curso fica guardado no `localStorage` do browser: não se perde ao ir ao
@@ -43,17 +43,21 @@ sem frameworks. Requer **Node 22.5 ou superior** (testado em Node 24).
 ### Estrutura
 
 ```
-server.js      servidor HTTP + API
-db.js          acesso à base de dados e hash das passwords
-jornada.js     dados da jornada em jogo  <-- é aqui que se muda a jornada
-apostas.js     utilitário de consulta da BD pelo terminal
+server.js       servidor HTTP + API
+db.js           acesso à base de dados e hash das passwords
+jornadas.js     TODAS as jornadas: jogos e resultados  <-- é aqui que se muda tudo
+jornada.js      atalho para a jornada com ativa: true
+arquivar.js     arquiva a classificação antes de fechar uma jornada
+apostas.js      utilitário de consulta da BD pelo terminal
 public/
-  index.html   landing page + boletim
-  login.html   login / criar conta
-  app.js       lógica do boletim
-  login.js     lógica do login
-  styles.css   estilos
-totofiegsi.db  base de dados SQLite (criada na 1ª execução)
+  index.html    landing page + boletim
+  jornadas.html jornadas, resultados e classificação
+  login.html    login / criar conta
+  app.js        lógica do boletim
+  jornadas.js   lógica da página de jornadas
+  login.js      lógica do login
+  styles.css    estilos
+totofiegsi.db   base de dados SQLite (criada na 1ª execução)
 ```
 
 ### Como correr localmente
@@ -68,7 +72,8 @@ Abrir **http://localhost:3000**. Para mudar a porta: `PORT=8080 node server.js`.
 
 | Método | Rota                  | Descrição                                          |
 |--------|-----------------------|----------------------------------------------------|
-| GET    | `/api/jornada`        | dados da jornada (jogos, limite, valor, limites)   |
+| GET    | `/api/jornada`        | dados da jornada em jogo (jogos, limite, valor)    |
+| GET    | `/api/jornadas`       | histórico: jogos, resultados e classificação       |
 | GET    | `/api/sessao`         | sessão atual                                        |
 | POST   | `/api/registo`        | criar conta (utilizador, equipa, password)         |
 | POST   | `/api/login`          | iniciar sessão                                      |
@@ -168,101 +173,113 @@ SELECT utilizador, COUNT(*) AS apostas FROM apostas GROUP BY utilizador ORDER BY
 
 ---
 
-## 3. Atualizar os jogos de cada jornada
+## 3. Jornadas: jogos, resultados e classificação
 
-Toda a configuração da jornada está num único ficheiro: **[jornada.js](jornada.js)**.
-Não é preciso mexer em mais nada — o frontend lê estes dados de `/api/jornada` e
-desenha o boletim a partir deles.
+Toda a informação das jornadas está em **[jornadas.js](jornadas.js)** — presentes e
+passadas, com os jogos e os resultados. O `jornada.js` é apenas um atalho para a
+jornada que tem `ativa: true`.
 
-### 3.1 Passo a passo
+A página **Jornadas** (no menu do topo) mostra, para cada match day: os jogos, os
+resultados oficiais e a classificação dos jogadores, com cada prognóstico marcado a
+verde (acertou) ou vermelho (falhou).
 
-**1) Fechar a jornada anterior.** Antes de apagar seja o que for, guarda o registo:
+### 3.1 Lançar os resultados
 
-```bash
-node apostas.js chaves > jornadas/MD1-apostas.txt   # exportar as chaves
-copy totofiegsi.db jornadas\MD1-totofiegsi.db       # backup da BD (Windows)
-```
-
-**2) Editar `jornada.js`** com os dados da nova jornada:
+Basta preencher o campo `resultado` de cada jogo em `jornadas.js`: `'1'` vitória da
+casa, `'x'` empate, `'2'` vitória do visitante. Fica `null` enquanto não se souber.
 
 ```js
-const JORNADA = {
-  matchDay: 'MD2',                                   // <- match day
-  epoca: '2026/27',
-  competicao: 'Liga dos Campeões',
-  periodo: '29 setembro a 1 de outubro de 2026',     // <- texto das datas
-  valorAposta: 2,                                    // valor fixo por aposta
-  colunas: 5,                                        // colunas do boletim
-  percentagemPrizePool: 90,
-  maxApostasPorUtilizador: 5,                        // limite por utilizador
-  minimoApostas: 5,                                  // mínimo para ativar o prémio
-  limiteISO: '2026-09-29T17:00:00',                  // <- 17H00 do dia do 1º jogo
-  limiteTexto: 'Terça-feira, 29/09/2026 às 17H00',   // <- o mesmo, para mostrar
-  jogos: [
-    { n:  1, casa: 'Equipa A', fora: 'Equipa B', data: '2026-09-29', hora: '20:00', dia: 'Ter' },
-    // ... exatamente 10 jogos, numerados de 1 a 10
-  ]
-};
+{ n: 1, casa: 'Porto', fora: 'Manchester City', data: '2026-09-08', hora: '20:00', dia: 'Ter', resultado: '1' },
 ```
 
-Regras a respeitar:
+Reinicia o servidor e a classificação aparece calculada na página Jornadas. Enquanto a
+jornada está `ativa`, os acertos são calculados **ao vivo** a partir das apostas que
+estão na base de dados.
 
-- **10 jogos**, com `n` de 1 a 10 — a ordem define a ordem dos prognósticos na chave
-  (`1;2;x;...`), por isso é a mesma ordem que usas para conferir os resultados.
-- `data` no formato `AAAA-MM-DD` e `hora` em `HH:MM`; `dia` é a abreviatura mostrada
-  (`Ter`, `Qua`, `Qui`).
-- `limiteISO` é a data/hora **do primeiro jogo da jornada às 17H00** — é o que fecha
-  as apostas (o servidor recusa apostas depois desta hora e a página mostra a contagem
-  decrescente). `limiteTexto` é só o texto apresentado; convém manterem-se coerentes.
-- Os jogos são agrupados visualmente por dia: basta que estejam ordenados por data.
+### 3.2 Fechar uma jornada e abrir a seguinte
 
-**3) Limpar as apostas da jornada anterior** (a tabela `apostas` não guarda o match day,
-por isso serve uma jornada de cada vez):
+A tabela `apostas` não guarda a que jornada pertence cada aposta, por isso a
+classificação tem de ser **arquivada** antes de se limparem as apostas.
+
+**1) Preenche todos os resultados** da jornada em `jornadas.js`.
+
+**2) Confere e arquiva a classificação:**
+
+```bash
+node arquivar.js            # mostra a classificação e o vencedor, sem gravar
+node arquivar.js --gravar   # escreve-a em jornadas.js (guarda cópia em .bak)
+```
+
+O script diz também quem ganhou e quanto recebe, já com a divisão em caso de empate e
+o aviso se não se atingiu o mínimo de apostas.
+
+**3) Fecha a jornada e abre a próxima** em `jornadas.js`:
+
+```js
+const JORNADAS = [
+  {
+    matchDay: 'MD1',
+    ativa: false,              // <- deixa de ser a jornada em jogo
+    // ... jogos com os resultados preenchidos
+    classificacao: [ /* gravada pelo arquivar.js */ ]
+  },
+  {
+    matchDay: 'MD2',           // <- a nova
+    ativa: true,
+    periodo: '29 setembro a 1 de outubro de 2026',
+    limiteISO: '2026-09-29T17:30:00',
+    limiteTexto: 'Terça-feira, 29/09/2026 às 17H30',
+    jogos: [
+      { n: 1, casa: 'Equipa A', fora: 'Equipa B', data: '2026-09-29', hora: '20:00', dia: 'Ter', resultado: null },
+      // ... exatamente 10 jogos, numerados de 1 a 10
+    ],
+    classificacao: null
+  }
+];
+```
+
+**4) Limpa as apostas** da jornada anterior:
 
 ```bash
 node -e "const {DatabaseSync}=require('node:sqlite');new DatabaseSync('./totofiegsi.db').exec('DELETE FROM apostas')"
 ```
 
-Os utilizadores mantêm-se — não é preciso voltar a registar nem a pedir o nome da equipa.
+Os utilizadores mantêm-se — não é preciso voltarem a registar-se.
 
-**4) Reiniciar o servidor** (`Ctrl+C` e `node server.js`) e confirmar em
-http://localhost:3000 que aparecem o novo match day, as novas datas e o novo limite.
+**5) Reinicia o servidor** e confirma o novo match day no boletim.
 
-### 3.2 Checklist rápida
+### 3.3 Regras a respeitar nos jogos
 
-- [ ] `matchDay` atualizado (MD2, MD3, ...)
-- [ ] 10 jogos, na ordem em que vais conferir os resultados
-- [ ] `limiteISO` = dia do primeiro jogo, às 17:00
-- [ ] `limiteTexto` coerente com o `limiteISO`
-- [ ] `periodo` com o intervalo de datas
-- [ ] apostas da jornada anterior exportadas e apagadas
+- **10 jogos**, com `n` de 1 a 10 — a ordem define a ordem dos prognósticos na chave
+  (`1;2;x;...`), por isso é a mesma ordem que usas para conferir os resultados.
+- `data` no formato `AAAA-MM-DD` e `hora` em `HH:MM`; `dia` é a abreviatura mostrada.
+- `limiteISO` é a data/hora a que as apostas fecham (por norma, 17H30 do dia do
+  primeiro jogo). `limiteTexto` é só o texto apresentado; convém manterem-se coerentes.
+- Os jogos são agrupados visualmente por dia: basta estarem ordenados por data.
+
+### 3.4 Definições comuns a todas as jornadas
+
+Ficam no objeto `CONFIG`, no topo de `jornadas.js`:
+
+| Parâmetro | Efeito |
+|---|---|
+| `valorAposta` | valor fixo de cada aposta (2 €) |
+| `colunas` | colunas do boletim — **1**, uma aposta por jogador |
+| `maxApostasPorUtilizador` | apostas por pessoa em cada jornada — **1** |
+| `minimoApostas` | mínimo para ativar o prémio (5 apostas = 10 €) |
+| `percentagemPrizePool` | percentagem do arrecadado que vai a prémio (90%) |
+| `pagamento.minutos` | minutos do cronómetro da janela de pagamento (5) |
+| `pagamento.contactos` | nomes e números MB WAY mostrados ao jogador |
+
+### 3.5 Checklist rápida
+
+- [ ] resultados da jornada anterior preenchidos
+- [ ] `node arquivar.js --gravar` corrido
+- [ ] jornada anterior com `ativa: false`
+- [ ] nova jornada com 10 jogos, `ativa: true` e `classificacao: null`
+- [ ] `limiteISO` e `limiteTexto` coerentes
+- [ ] apostas antigas apagadas da base de dados
 - [ ] servidor reiniciado e página verificada
-
-### 3.3 Outros parâmetros do jogo
-
-| Parâmetro                 | Efeito                                                        |
-|---------------------------|---------------------------------------------------------------|
-| `valorAposta`             | valor fixo de cada aposta (2 €)                               |
-| `colunas`                 | colunas do boletim (convém ser igual ao limite por utilizador) |
-| `maxApostasPorUtilizador` | limite de apostas por pessoa em cada jornada (5)              |
-| `minimoApostas`           | mínimo para ativar o prémio (5 apostas = 10 €)                |
-| `percentagemPrizePool`    | percentagem do arrecadado que vai a prémio (90%)              |
-| `pagamento.minutos`       | minutos do cronómetro da janela de pagamento (5)              |
-| `pagamento.contactos`     | nomes e números MB WAY mostrados ao jogador                   |
-
-Os contactos para onde os jogadores enviam o MB WAY estão em `jornada.js`, na secção
-`pagamento` — é aí que se acrescenta, remove ou corrige um número:
-
-```js
-pagamento: {
-  metodo: 'MB WAY',
-  minutos: 5,
-  contactos: [
-    { nome: 'Nome a mostrar', telemovel: '9XX XXX XXX' }
-    // ...
-  ]
-},
-```
 
 ---
 

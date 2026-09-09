@@ -6,6 +6,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 
 const { JORNADA } = require('./jornada');
+const { todasAsJornadas, contarAcertos } = require('./jornadas');
 const db = require('./db');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -188,6 +189,61 @@ const rotas = {
     });
   },
 
+  // Historico de jornadas: jogos e resultados. Para a jornada ativa junta a
+  // classificacao calculada a partir das apostas que estao na base de dados;
+  // para as jornadas fechadas usa a classificacao arquivada em jornadas.js.
+  'GET /api/jornadas': async (req, res) => {
+    const jornadas = todasAsJornadas().map((j) => {
+      const base = {
+        matchDay: j.matchDay,
+        epoca: j.epoca,
+        competicao: j.competicao,
+        ativa: !!j.ativa,
+        periodo: j.periodo,
+        limiteTexto: j.limiteTexto,
+        limiteISO: j.limiteISO,
+        valorAposta: j.valorAposta,
+        percentagemPrizePool: j.percentagemPrizePool,
+        minimoApostas: j.minimoApostas,
+        totalJogos: j.totalJogos,
+        resultadosConhecidos: j.resultadosConhecidos,
+        jogos: j.jogos
+      };
+
+      if (!j.ativa) {
+        return { ...base, classificacao: j.classificacao || [] };
+      }
+
+      // jornada ativa: calcula ao vivo a partir da BD
+      const apostas = db.todasAsApostas();
+      const classificacao = apostas
+        .map((a) => {
+          const u = db.obterUtilizador(a.utilizador);
+          return {
+            utilizador: a.utilizador,
+            equipa: u ? u.equipa : null,
+            chave: a.chave,
+            acertos: contarAcertos(a.chave, j.jogos)
+          };
+        })
+        .sort((x, y) => y.acertos - x.acertos || x.utilizador.localeCompare(y.utilizador));
+
+      const totalApostas = apostas.length;
+      const arrecadado = totalApostas * j.valorAposta;
+
+      return {
+        ...base,
+        classificacao,
+        totalApostas,
+        arrecadado,
+        prizePool: arrecadado * (j.percentagemPrizePool / 100),
+        premioAtivo: totalApostas >= j.minimoApostas
+      };
+    });
+
+    json(res, 200, { jornadas });
+  },
+
   'GET /api/sessao': async (req, res) => {
     const sessao = sessaoDoPedido(req);
     if (!sessao) return json(res, 200, { autenticado: false });
@@ -277,7 +333,11 @@ const rotas = {
       return json(res, 400, { erro: 'Nao recebi nenhuma aposta.' });
     }
     if (chaves.length > JORNADA.colunas) {
-      return json(res, 400, { erro: 'Maximo de ' + JORNADA.colunas + ' apostas por boletim.' });
+      return json(res, 400, {
+        erro: JORNADA.colunas === 1
+          ? 'So e permitida uma aposta por boletim.'
+          : 'Maximo de ' + JORNADA.colunas + ' apostas por boletim.'
+      });
     }
 
     // limite de apostas por utilizador nesta jornada
@@ -285,8 +345,10 @@ const rotas = {
     const restantes = JORNADA.maxApostasPorUtilizador - jaRegistadas;
     if (restantes <= 0) {
       return json(res, 409, {
-        erro: 'Ja atingiste o limite de ' + JORNADA.maxApostasPorUtilizador +
-              ' apostas nesta jornada.',
+        erro: JORNADA.maxApostasPorUtilizador === 1
+          ? 'Ja tens a tua aposta registada nesta jornada. So e permitida uma por jogador.'
+          : 'Ja atingiste o limite de ' + JORNADA.maxApostasPorUtilizador +
+            ' apostas nesta jornada.',
         registadas: jaRegistadas,
         restantes: 0
       });

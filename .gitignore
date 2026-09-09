@@ -5,6 +5,12 @@
 /totofiegsi.db-journal
 /jornadas/
 
+# projeto do DB Browser (preferencias locais)
+*.sqbpro
+
+# copia de seguranca criada pelo arquivar.js
+jornadas.js.bak
+
 # a base de dados de exemplo (exemplo/totofiegsi.exemplo.db) VAI para o repositorio,
 # para os colegas terem dados com que experimentar
 

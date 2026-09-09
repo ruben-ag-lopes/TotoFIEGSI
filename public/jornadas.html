@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TotoFIEGSI &middot; Jornadas e Resultados</title>
+<link rel="icon" href="Logo_FIEGSI.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="marca" href="/">
+    <img src="Logo_FIEGSI.png" alt="FIEGSI">
+    <span class="marca-txt">Toto<strong>FIEGSI</strong></span>
+  </a>
+  <nav class="menu">
+    <a href="index.html">Boletim</a>
+    <a href="jornadas.html" class="ativo">Jornadas</a>
+  </nav>
+  <nav class="topbar-nav">
+    <span id="estado-sessao" class="sessao">&nbsp;</span>
+    <a id="btn-sair" class="link-sair" href="#" hidden>Sair</a>
+  </nav>
+</header>
+
+<main class="pagina">
+
+  <section class="pagina-topo">
+    <h1>Jornadas e resultados</h1>
+    <p>Os jogos de cada jornada, os resultados oficiais aos 90 minutos e a
+       classifica&ccedil;&atilde;o dos jogadores.</p>
+  </section>
+
+  <!-- Separadores: uma jornada de cada vez -->
+  <nav class="abas-jornadas" id="abas-jornadas"></nav>
+
+  <div id="conteudo-jornada"></div>
+
+</main>
+
+<footer class="rodape">TotoFIEGSI &middot; Liga FIEGSI 2026/27</footer>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<script src="jornadas.js"></script>
+</body>
+</html>

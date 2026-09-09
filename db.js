@@ -75,6 +75,10 @@ function apostasDoUtilizador(utilizador) {
   return db.prepare('SELECT id, chave FROM apostas WHERE utilizador = ? ORDER BY id').all(utilizador);
 }
 
+function todasAsApostas() {
+  return db.prepare('SELECT id, utilizador, chave FROM apostas ORDER BY id').all();
+}
+
 function contarApostasDoUtilizador(utilizador) {
   return db.prepare('SELECT COUNT(*) AS n FROM apostas WHERE utilizador = ?').get(utilizador).n;
 }
@@ -90,6 +94,7 @@ module.exports = {
   verificarPassword,
   inserirApostas,
   apostasDoUtilizador,
+  todasAsApostas,
   contarApostasDoUtilizador,
   totalApostas
 };
