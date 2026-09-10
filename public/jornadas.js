@@ -125,6 +125,7 @@ function tabelaJogos(j) {
   j.jogos.forEach((jogo) => {
     const tr = document.createElement('tr');
     if (dataAnterior && dataAnterior !== jogo.data) tr.classList.add('inicio-bloco');
+    if (!jogo.resultado) tr.classList.add('jogo-pendente');
     dataAnterior = jogo.data;
 
     const tdN = document.createElement('td');

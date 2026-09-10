@@ -881,3 +881,14 @@ td.td-picks { text-align: center; }
 
 .ficha.certa { background: var(--verde); color: var(--branco); }
 .ficha.errada { background: #f0d3d3; color: #9b2b2b; }
+
+/* ---------- jogos ainda por confirmar (pagina Jornadas) ---------- */
+.tabela-jogos tbody tr.jogo-pendente {
+  background: #fff6d6;
+}
+.tabela-jogos tbody tr.jogo-pendente:hover {
+  background: #ffefb0;
+}
+.tabela-jogos tbody tr.jogo-pendente .td-num {
+  color: #8a6d00;
+}
