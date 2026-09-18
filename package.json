@@ -10,6 +10,6 @@
     "apostas": "node --env-file=.env apostas.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   }
 }
