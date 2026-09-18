@@ -1,4 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "outputDirectory": "public"
+  "buildCommand": null,
+  "outputDirectory": "public",
+  "framework": null,
+  "functions": {
+    "api/[...rota].js": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:caminho*", "destination": "/api/[...rota].js" }
+  ]
 }
