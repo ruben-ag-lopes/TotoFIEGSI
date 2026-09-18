@@ -125,7 +125,9 @@ function tabelaJogos(j) {
   j.jogos.forEach((jogo) => {
     const tr = document.createElement('tr');
     if (dataAnterior && dataAnterior !== jogo.data) tr.classList.add('inicio-bloco');
-    if (!jogo.resultado) tr.classList.add('jogo-pendente');
+    // Amarelo só nas jornadas já em curso: se ainda não há resultado nenhum,
+    // marcar as 10 linhas seria ruído em vez de aviso.
+    if (!jogo.resultado && j.resultadosConhecidos > 0) tr.classList.add('jogo-pendente');
     dataAnterior = jogo.data;
 
     const tdN = document.createElement('td');
