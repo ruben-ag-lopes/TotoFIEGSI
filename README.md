@@ -87,11 +87,89 @@ Abrir **http://localhost:3000**.
 O servidor local e o Vercel partilham a mesma tabela de rotas (`lib/rotas.js`),
 por isso o que testas localmente é o que corre em produção.
 
-### Publicar
+### Pôr o site no ar / atualizar
 
-O Vercel publica sozinho a cada `git push` para o `main`. As variáveis de ambiente
-(`SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SESSAO_SEGREDO`) configuram-se em
-*Project Settings → Environment Variables*.
+**O site:** https://totofiegsi.vercel.app
+
+#### A) Publicar alterações ao código
+
+Basta enviar para o GitHub — o Vercel publica sozinho:
+
+```bash
+git add -A
+git commit -m "descrição da alteração"
+git push
+```
+
+Demora cerca de 30 segundos. Isto serve para tudo o que esteja no repositório:
+mudar de jornada, lançar resultados, alterar textos.
+
+Se quiseres publicar sem passar pelo git (por exemplo, para testar uma alteração
+local antes de a commitar):
+
+```bash
+npx vercel --prod
+```
+
+#### B) Acordar a base de dados (o caso mais provável)
+
+O plano gratuito do Supabase **adormece o projeto ao fim de 7 dias sem uso**. Quando
+isso acontece o site carrega, mas fica sem dados — apostas e classificações vêm
+vazias e o login falha.
+
+Para acordar:
+
+1. Entra em **supabase.com** → o projeto aparece marcado como **Paused**
+2. Carrega em **Restore**
+3. Espera cerca de 1 minuto
+
+Os dados não se perdem. Convém fazer isto no dia em que abres a jornada seguinte.
+
+#### C) Confirmar que está tudo bem
+
+Abre:
+
+```
+https://totofiegsi.vercel.app/api/saude
+```
+
+Este endereço **não toca na base de dados**, por isso responde mesmo quando algo
+está mal configurado. Devolve:
+
+```json
+{ "ok": true, "jornadaAtiva": "MD2", "configuracao": { ... } }
+```
+
+- **`ok: true`** → configuração correta
+- **`ok: false`** → diz-te qual das variáveis de ambiente falta
+- **erro `FUNCTION_INVOCATION_FAILED`** → a função nem arranca; ver os logs (abaixo)
+
+#### D) Ver o que correu mal
+
+```bash
+npx vercel logs https://totofiegsi.vercel.app
+```
+
+Mostra os erros reais do servidor — foi assim que se descobriu, por exemplo, que o
+Vercel estava a correr o JavaScript do browser como se fosse código de servidor.
+
+Outros comandos úteis:
+
+```bash
+npx vercel ls                    # publicações recentes e o estado de cada uma
+npx vercel env ls production     # que variáveis de ambiente estão definidas
+```
+
+#### E) Voltar a uma versão anterior
+
+Se uma publicação partir o site:
+
+```bash
+npx vercel rollback
+```
+
+Ou no painel: *Deployments* → escolhe uma publicação que funcionava → **Promote to
+Production**.
 
 ### API
 
