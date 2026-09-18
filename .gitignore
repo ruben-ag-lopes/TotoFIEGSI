@@ -1,3 +1,8 @@
+# SEGREDOS - chaves do Supabase e segredo das sessoes. Nunca vao para o GitHub.
+.env
+.env.local
+.env.*.local
+
 # base de dados real (dados e passwords dos jogadores) - fica so na tua maquina
 /totofiegsi.db
 /totofiegsi.db-shm
@@ -8,8 +13,8 @@
 # projeto do DB Browser (preferencias locais)
 *.sqbpro
 
-# copia de seguranca criada pelo arquivar.js
-jornadas.js.bak
+# pasta local do Vercel
+.vercel
 
 # a base de dados de exemplo (exemplo/totofiegsi.exemplo.db) VAI para o repositorio,
 # para os colegas terem dados com que experimentar

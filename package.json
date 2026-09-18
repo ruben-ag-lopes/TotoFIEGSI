@@ -1,13 +1,15 @@
 {
   "name": "totofiegsi",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "TotoFIEGSI - boletim de apostas 1X2 da Liga dos Campeoes (FIEGSI 26/27)",
+  "description": "TotoFIEGSI - boletim de apostas 1X2 da Liga dos Campeoes (Liga FIEGSI 26/27)",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node --env-file=.env server.js",
+    "migrar": "node --env-file=.env migrar.js",
+    "apostas": "node --env-file=.env apostas.js"
   },
   "engines": {
-    "node": ">=22.5.0"
+    "node": ">=20"
   }
 }

@@ -2,7 +2,7 @@
 
 Webapp do jogo **TotoFIEGSI** da Liga FIEGSI 26/27: boletim de prognósticos 1X2 para os
 10 jogos da jornada da Liga dos Campeões, aposta de valor fixo (2 €) e registo das
-apostas numa base de dados SQLite.
+apostas numa base de dados Postgres (Supabase). Alojada no Vercel, sem custos.
 
 ---
 
@@ -36,36 +36,62 @@ apostas numa base de dados SQLite.
 
 ### Tecnologia
 
-Node.js puro, **sem dependências externas**: servidor HTTP da biblioteca padrão,
-SQLite através do módulo integrado `node:sqlite` e frontend em HTML/CSS/JavaScript
-sem frameworks. Requer **Node 22.5 ou superior** (testado em Node 24).
+**Zero dependências npm** — continua a não haver `node_modules`. O servidor usa só
+a biblioteca padrão do Node, e fala com a base de dados pela API REST do Supabase
+através do `fetch` nativo. Isto elimina por completo o risco de *supply chain*,
+que é hoje o vetor mais comum de comprometimento em apps Node.
+
+| Peça | Serviço | Custo |
+|---|---|---|
+| Alojamento e HTTPS | Vercel (plano Hobby) | grátis |
+| Base de dados | Supabase (Postgres, plano Free) | grátis |
+| Endereço | `totofiegsi.vercel.app` | grátis |
+
+Requer **Node 20 ou superior** (para o `fetch` nativo).
 
 ### Estrutura
 
 ```
-server.js       servidor HTTP + API
-db.js           acesso à base de dados e hash das passwords
-jornadas.js     TODAS as jornadas: jogos e resultados  <-- é aqui que se muda tudo
-jornada.js      atalho para a jornada com ativa: true
-apostas.js      utilitário de consulta da BD pelo terminal
-public/
-  index.html    landing page + boletim
-  jornadas.html jornadas, resultados e classificação
-  login.html    login / criar conta
-  app.js        lógica do boletim
-  jornadas.js   lógica da página de jornadas
-  login.js      lógica do login
-  styles.css    estilos
-totofiegsi.db   base de dados SQLite (criada na 1ª execução)
+api/
+  [...rota].js   ponto de entrada da API no Vercel (catch-all)
+lib/
+  rotas.js       a API — a MESMA tabela de rotas usada no Vercel e localmente
+  db.js          acesso aos dados (Supabase)
+  supabase.js    cliente REST mínimo, feito com o fetch nativo
+  sessao.js      sessões em cookie assinado (HMAC)
+  limite.js      limite de tentativas de login
+  password.js    hash scrypt
+  http.js        ajudas de HTTP
+  config.js      variáveis de ambiente
+sql/
+  esquema.sql    tabelas + RLS, para correr no SQL Editor do Supabase
+public/          frontend (servido como estático pelo Vercel)
+jornadas.js      TODAS as jornadas: jogos e resultados  <-- é aqui que se muda tudo
+jornada.js       atalho para a jornada com ativa: true
+server.js        servidor local, para desenvolvimento
+migrar.js        migração única do SQLite antigo para o Supabase
+apostas.js       utilitário de consulta pelo terminal
 ```
 
 ### Como correr localmente
 
+Precisas de um ficheiro `.env` (ver [.env.exemplo](.env.exemplo)) com as chaves do
+Supabase. Nunca vai para o git.
+
 ```bash
-node server.js        # ou: npm start
+npm start                    # = node --env-file=.env server.js
 ```
 
-Abrir **http://localhost:3000**. Para mudar a porta: `PORT=8080 node server.js`.
+Abrir **http://localhost:3000**.
+
+O servidor local e o Vercel partilham a mesma tabela de rotas (`lib/rotas.js`),
+por isso o que testas localmente é o que corre em produção.
+
+### Publicar
+
+O Vercel publica sozinho a cada `git push` para o `main`. As variáveis de ambiente
+(`SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SESSAO_SEGREDO`) configuram-se em
+*Project Settings → Environment Variables*.
 
 ### API
 
@@ -82,22 +108,29 @@ Abrir **http://localhost:3000**. Para mudar a porta: `PORT=8080 node server.js`.
 
 ---
 
-## 2. Base de dados
+## 2. Base de dados (Supabase / Postgres)
 
-Duas tabelas, no ficheiro `totofiegsi.db`:
+Três tabelas — o esquema completo está em [sql/esquema.sql](sql/esquema.sql), pronto
+a colar no **SQL Editor** do Supabase:
 
 ```sql
-CREATE TABLE utilizadores (
-  utilizador TEXT PRIMARY KEY,   -- nome de utilizador
-  equipa     TEXT NOT NULL,      -- nome da equipa (pedido apenas no registo)
-  password   TEXT NOT NULL       -- hash scrypt: scrypt$<salt>$<hash>
+create table utilizadores (
+  utilizador text primary key,   -- nome de utilizador
+  equipa     text not null,      -- nome da equipa (pedido apenas no registo)
+  password   text not null       -- hash scrypt: scrypt$<salt>$<hash>
 );
 
-CREATE TABLE apostas (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  utilizador TEXT NOT NULL REFERENCES utilizadores(utilizador),
-  jornada    TEXT NOT NULL,      -- match day a que a aposta pertence (ex.: 'MD1')
-  chave      TEXT NOT NULL       -- 10 prognósticos separados por ';'
+create table apostas (
+  id         bigint generated always as identity primary key,
+  utilizador text not null references utilizadores(utilizador),
+  jornada    text not null,      -- match day a que a aposta pertence (ex.: 'MD1')
+  chave      text not null       -- 10 prognósticos separados por ';'
+);
+
+create table tentativas_login (   -- limite anti força bruta
+  ip       text primary key,
+  contagem integer not null default 0,
+  inicio   timestamptz not null default now()
 );
 ```
 
@@ -106,85 +139,57 @@ apostas de uma jornada fechada nunca são apagadas, só deixam de ser a jornada 
 É por isso que a página Jornadas mostra a classificação de qualquer match day, mesmo
 anos depois de ter fechado.
 
-Cada aposta é uma linha, no formato combinado:
+### Segurança: RLS (a parte que não pode falhar)
 
-```
-user123   1;2;x;1;1;2;2;x;x;1
-```
+As três tabelas têm **Row Level Security ligado e nenhuma política** definida. Na
+prática: a chave `anon` do Supabase (a que é pública e pode aparecer no browser) não
+consegue ler nem escrever nada. Só a chave `service_role` passa — e essa vive apenas
+nas variáveis de ambiente do servidor.
 
-(o `jornada` é uma coluna à parte — este formato refere-se só ao par utilizador/chave)
+Toda a app fala com a base de dados pelas funções de servidor; o frontend nunca
+recebe chave nenhuma. Este é o erro clássico com Supabase — tabelas sem RLS e uma
+chave anónima a circular — e aqui está fechado pela raiz.
 
-Consultas pelo terminal:
+### Gerir a base de dados
 
-```bash
-node apostas.js               # utilizadores e apostas de TODAS as jornadas
-node apostas.js resumo        # apostas + prize pool da jornada ativa
-node apostas.js resumo MD1    # o mesmo, para uma jornada específica
-node apostas.js chaves        # "utilizador chave" da jornada ativa
-node apostas.js chaves MD1    # o mesmo, para uma jornada específica
-```
+Pelo painel do Supabase: **Table Editor** (edição ponto a ponto) ou **SQL Editor**
+(consultas). Ao contrário do SQLite, abrir a base de dados para conferir **já não
+bloqueia a app** — acabaram os `database is locked`.
 
-**Se já tinhas a app instalada antes desta funcionalidade:** ao arrancar o servidor,
-o `db.js` deteta que a tabela `apostas` ainda não tem a coluna `jornada` e acrescenta-a
-sozinho, atribuindo `'MD1'` às apostas que já lá estavam (a única jornada que existiu
-até agora). Não precisas de fazer nada — mas convém guardares uma cópia do
-`totofiegsi.db` antes de atualizares, como em qualquer alteração à base de dados.
-
-Para gestão manual serve qualquer cliente SQLite (DB Browser for SQLite, extensão
-SQLite do VS Code, `sqlite3` na linha de comandos). O ficheiro está em modo de
-journal normal, por isso é um **único ficheiro** — copiar `totofiegsi.db` é um backup
-completo.
-
-As passwords são guardadas com hash `scrypt`. Se preferires texto simples para
-gerires a base de dados à mão, é uma alteração de duas linhas em `db.js`
-(`hashPassword` e `verificarPassword`).
-
-### Base de dados de exemplo (para partilhar com os colegas)
-
-A base de dados **é criada automaticamente na primeira execução**: quem clonar o
-repositório só tem de correr `node server.js` e já tem as duas tabelas prontas. Não
-precisa de receber nenhum ficheiro.
-
-Para que os colegas vejam a app já com dados, há uma base de dados de exemplo
-versionada no repositório, com 5 utilizadores e 5 apostas fictícias na MD1:
+Pelo terminal:
 
 ```bash
-# ver os dados de exemplo sem tocar na base de dados real
-TOTO_DB=exemplo/totofiegsi.exemplo.db node apostas.js
-
-# correr a app com a base de dados de exemplo (Windows PowerShell)
-$env:TOTO_DB = "exemplo\totofiegsi.exemplo.db"; node server.js
-
-# ou simplesmente usá-la como ponto de partida
-copy exemplo\totofiegsi.exemplo.db totofiegsi.db
+npm run apostas                      # utilizadores e apostas de TODAS as jornadas
+npm run apostas -- resumo            # apostas + prize pool da jornada ativa
+npm run apostas -- resumo MD1        # o mesmo, para uma jornada específica
+npm run apostas -- chaves MD1        # "utilizador chave" de uma jornada
 ```
 
-A password de todas as contas de exemplo é `toto1234`. Para a regerar:
-`node exemplo/criar-exemplo.js`.
+### O projeto adormece ao fim de 7 dias sem uso
 
-**Porque é que o `totofiegsi.db` real não vai para o repositório?** Não é por ser
-público — o repositório é privado. É porque o SQLite é um ficheiro **binário**: se duas
-pessoas correrem a app e ambas fizerem commit do `.db`, o git não consegue juntar as
-duas versões e alguém perde as suas apostas. Além disso, tudo o que entra no histórico
-do git lá fica, incluindo os utilizadores e as passwords com hash.
+É o comportamento do plano gratuito do Supabase e, neste caso, é intencional: entre
+jornadas o site não precisa de estar de pé. Quando adormecer, a app deixa de
+responder até reativares.
 
-Se mesmo assim quiseres partilhar a base de dados real pelo repositório, basta apagar a
-linha `/totofiegsi.db` do `.gitignore` e fazer commit — combinem só que **uma única
-pessoa** é que a atualiza. Em alternativa, para uma entrega pontual, envia o ficheiro
-por outro meio (Drive, Teams) em vez de o versionar.
+**Reativar:** painel do Supabase → o projeto aparece marcado como *Paused* → botão
+**Restore**. Demora cerca de um minuto e os dados não se perdem.
+
+Convém fazê-lo no dia em que abres a jornada seguinte.
 
 ### Corrigir/anular apostas à mão
 
+No SQL Editor do Supabase:
+
 ```sql
 -- apagar uma aposta específica
-DELETE FROM apostas WHERE id = 12;
+delete from apostas where id = 12;
 
 -- apagar todas as apostas de um utilizador numa jornada
-DELETE FROM apostas WHERE utilizador = 'user123' AND jornada = 'MD1';
+delete from apostas where utilizador = 'user123' and jornada = 'MD1';
 
 -- ver quantas apostas cada jogador tem, por jornada
-SELECT jornada, utilizador, COUNT(*) AS apostas
-FROM apostas GROUP BY jornada, utilizador ORDER BY jornada, apostas DESC;
+select jornada, utilizador, count(*) as apostas
+from apostas group by jornada, utilizador order by jornada, apostas desc;
 ```
 
 ---
@@ -224,7 +229,7 @@ qualquer jornada, a qualquer momento, a partir das apostas guardadas na base de 
 **2) Confirma a classificação e o vencedor** na página Jornadas, ou pelo terminal:
 
 ```bash
-node apostas.js resumo MD1
+npm run apostas -- resumo MD1
 ```
 
 **3) Fecha a jornada e abre a próxima**, editando `jornadas.js`:
@@ -292,217 +297,85 @@ Ficam no objeto `CONFIG`, no topo de `jornadas.js`:
 
 ---
 
-## 4. Opções de alojamento
+## 4. Publicar (Vercel + Supabase)
 
-Quase todas são gratuitas; a única com custo é a 4.3 (~1 €/ano pelo domínio) e está
-assinalada. O critério técnico decisivo é
-**haver disco persistente**: sem ele, o ficheiro `totofiegsi.db` desaparece a cada
-reinício ou publicação, e deixas de poder gerir a base de dados como fazes hoje.
+Custo total: **0 €**. Endereço: `https://totofiegsi.vercel.app`.
 
-> Os planos gratuitos mudam com frequência. Confirma as condições atuais antes de
-> contares com qualquer um deles para uma jornada a sério.
+### 4.1 Supabase — a base de dados
 
-### 4.1 O teu PC + Cloudflare Tunnel — a via mais simples
+1. **supabase.com** → novo projeto (região Europa, por exemplo Frankfurt ou Londres)
+2. **SQL Editor** → cola o conteúdo de [sql/esquema.sql](sql/esquema.sql) → *Run*
+3. **Project Settings → Data API** → copia o **Project URL**
+4. **Project Settings → API Keys** → copia a chave **`service_role`** (a secreta)
 
-O `cloudflared` abre uma ligação de saída do teu computador para a Cloudflare e
-devolve um endereço `https://...` público. Não é preciso IP fixo, abrir portas no
-router nem configurar certificados.
+> A chave `service_role` dá acesso total à base de dados. Nunca a ponhas no código,
+> num commit, nem num chat — só nas variáveis de ambiente.
+
+### 4.2 Vercel — a aplicação
+
+1. **vercel.com** → *Add New Project* → importa o repositório `TotoFIEGSI`
+2. Framework Preset: **Other** (não é preciso build)
+3. **Environment Variables** — acrescenta as três:
+
+   | Nome | Valor |
+   |---|---|
+   | `SUPABASE_URL` | o Project URL do Supabase |
+   | `SUPABASE_SERVICE_KEY` | a chave `service_role` |
+   | `SESSAO_SEGREDO` | um segredo aleatório (ver abaixo) |
+
+   Gera o segredo das sessões com:
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+4. *Deploy*. A partir daqui, cada `git push` para o `main` publica sozinho.
+5. **Settings → Domains** → o domínio pode ser mudado para `totofiegsi.vercel.app`
+   (se estiver livre).
+
+### 4.3 Migrar os dados do SQLite antigo
+
+Uma única vez, com o `.env` preenchido localmente:
 
 ```bash
-node server.js                                   # numa janela
-cloudflared tunnel --url http://localhost:3000   # noutra janela
+node --env-file=.env migrar.js              # mostra o que vai migrar, sem escrever
+node --env-file=.env migrar.js --escrever   # migra a sério
 ```
 
-O comando imprime o endereço (algo como `https://xxx-yyy-zzz.trycloudflare.com`) e é
-esse que partilhas com os jogadores.
+Leva os utilizadores e as apostas do `totofiegsi.db` para o Supabase. Pode ser
+corrido mais do que uma vez sem duplicar nada. O `totofiegsi.db` fica intacto no
+disco, como cópia de segurança.
 
-**O que implica:**
+### 4.4 Domínio próprio (opcional, ~1 €/ano)
 
-- A app só está no ar **enquanto o teu PC estiver ligado** com o servidor e o túnel a
-  correr. Se o computador suspender, o site cai. Na prática, tens de o manter ligado
-  desde que abres as apostas até às 17H00 do dia do primeiro jogo.
-- O endereço do túnel gratuito é **aleatório e muda sempre que reinicias** — tens de
-  reenviar o link a cada jornada. Um endereço fixo exigiria um domínio próprio
-  (~10 €/ano), que é precisamente o que estamos a excluir.
-- A base de dados **fica no teu computador**, que é a situação ideal para quem a gere
-  à mão: nada sai do teu controlo e os backups são cópias do ficheiro.
-- HTTPS incluído, sem configuração.
-- Chega folgadamente para dezenas de jogadores em simultâneo.
+O `totofiegsi.vercel.app` é gratuito e chega perfeitamente. Se um dia quiseres um
+domínio teu (`totofiegsi.pt`, `.com`, `.xyz`):
 
-Instalação do `cloudflared` no Windows: `winget install --id Cloudflare.cloudflared`
-(ou o `.exe` a partir do site da Cloudflare). **Já está instalado nesta máquina**, em
-`C:\Program Files (x86)\cloudflared\cloudflared.exe`.
+1. Compra o domínio num registador (o `.xyz` anda por ~$0,99 no primeiro ano —
+   **confirma o preço de renovação**, que sobe para 10–15 €/ano)
+2. No Vercel: *Settings → Domains* → adiciona o domínio
+3. No registador: aponta os nameservers ou os registos DNS para o Vercel
 
-Para fechar o acesso público, basta terminar o processo do `cloudflared` (`Ctrl+C` na
-janela do túnel): o site deixa imediatamente de estar acessível de fora, sem afetar o
-`http://localhost:3000`.
+O Cloudflare só entra se quiseres gerir o DNS lá — com o subdomínio do Vercel, ou
+até com domínio próprio apontado diretamente ao Vercel, não é preciso.
 
-**Alternativa equivalente:** `ngrok`. O plano gratuito dá um endereço estático por
-conta, mas mostra uma página de aviso antes do site na primeira visita de cada
-browser — mais atrito para os jogadores do que o Cloudflare Tunnel.
+### 4.5 O que mudou na segurança com esta migração
 
-### 4.2 VPS gratuito permanente (Oracle Cloud Always Free)
+| | Antes (PC + túnel) | Agora (Vercel + Supabase) |
+|---|---|---|
+| Onde corre | o teu computador pessoal | infraestrutura do Vercel |
+| Se houvesse falha na app | acesso aos teus ficheiros | contentor isolado e efémero |
+| Base de dados | ficheiro no teu disco | Postgres gerido, com RLS |
+| Endereço | mudava a cada arranque | fixo |
+| Segredos | nenhum | em variáveis de ambiente, fora do git |
+| Dependências npm | zero | **zero** (mantido) |
 
-A Oracle Cloud mantém um escalão *Always Free* com máquinas que dão perfeitamente para
-esta app. Também a Google Cloud tem uma `e2-micro` gratuita em certas regiões.
+**Sessões:** passaram de um `Map` em memória para **cookie assinado com HMAC**. Em
+serverless cada pedido pode cair noutra instância, e o `Map` perdia sessões ao acaso.
+Contrapartida assumida: sendo sem estado, não há revogação do lado do servidor — o
+logout apaga o cookie, mas um cookie roubado vale até expirar (8 horas).
 
-**O que implica:**
-
-- Servidor **a funcionar 24/7 sem depender do teu PC**, com disco persistente: o SQLite
-  funciona sem alterar uma linha de código.
-- É preciso **cartão para verificação de identidade** no registo (não é cobrado
-  enquanto ficares dentro dos recursos *Always Free*) — se preferires não dar cartão,
-  esta opção sai de cima da mesa.
-- A capacidade das máquinas ARM gratuitas nem sempre está disponível na região
-  escolhida, e instâncias inativas podem ser recuperadas; convém confirmar as regras
-  em vigor.
-- **És tu o administrador**: atualizações do sistema, firewall, arranque automático do
-  serviço e backups do `.db` ficam do teu lado.
-- Para teres um endereço `https://` com certificado precisas de um nome: dá para fazer
-  de graça com um subdomínio **DuckDNS** e o **Caddy**, que trata do certificado
-  Let's Encrypt sozinho.
-- É a opção com mais trabalho inicial, mas a única gratuita que fica sempre no ar com
-  a base de dados no formato atual.
-
-
-### 4.3 Endereço fixo com domínio próprio (~1 €/ano) — para fazer mais tarde
-
-Esta é a única forma de teres um **endereço que não muda**, sem tocar no router e com a
-base de dados a viver no teu computador. Não é gratuita, mas é barata: o custo é só o
-domínio.
-
-**Porque é que o domínio é obrigatório:** o túnel *temporário* da secção 4.1 sorteia um
-endereço a cada arranque. Para um endereço fixo é preciso um túnel **nomeado**, e esse
-exige que a Cloudflare controle o DNS de um domínio teu. Subdomínios gratuitos (DuckDNS
-e afins) não servem, porque não deixam mudar os nameservers.
-
-**O que ganhas face ao túnel temporário:** endereço fixo e teu, WAF e proteção DDoS da
-Cloudflare à frente da app, e a opção do Cloudflare Access. O teu IP de casa continua
-escondido e não se abre porta nenhuma.
-
-#### Passo 1 — comprar o domínio
-
-Num registador como o Namecheap, procura um `.xyz` livre (ex.: `totofiegsi.xyz`) —
-rondam **$0,99 no primeiro ano**.
-
-> **Confirma a coluna de renovação antes de pagar.** O preço promocional é só do 1.º
-> ano; a renovação sobe tipicamente para 10–15 €/ano.
-
-Não contrates extras: sem alojamento, sem email, sem SSL pago — o certificado vem da
-Cloudflare, de graça.
-
-#### Passo 2 — pôr o domínio na Cloudflare
-
-1. Cria conta gratuita em `dash.cloudflare.com`
-2. **Add a site** → escreve o domínio → escolhe o plano **Free**
-3. A Cloudflare mostra **dois nameservers** (algo como `xxx.ns.cloudflare.com`)
-4. No registador: *Domain* → *Nameservers* → passa de "BasicDNS" para **Custom DNS** e
-   cola os dois
-5. Espera pela confirmação (minutos, por vezes algumas horas)
-
-#### Passo 3 — criar o túnel nomeado
-
-Numa consola, na pasta do projeto (`CF` é o caminho do cloudflared já instalado):
-
-```powershell
-$CF = "C:\Program Files (x86)\cloudflared\cloudflared.exe"
-
-& $CF tunnel login                                 # abre o browser para autorizares
-& $CF tunnel create totofiegsi                     # cria o tunel e o ficheiro de credenciais
-& $CF tunnel route dns totofiegsi totofiegsi.xyz   # aponta o dominio ao tunel
-```
-
-Depois cria o ficheiro `C:\Users\HP\.cloudflared\config.yml`:
-
-```yaml
-tunnel: totofiegsi
-credentials-file: C:\Users\HP\.cloudflared\<id-do-tunel>.json
-
-ingress:
-  - hostname: totofiegsi.xyz
-    service: http://localhost:3000
-  - service: http_status:404
-```
-
-E corre o túnel:
-
-```powershell
-& $CF tunnel run totofiegsi
-```
-
-#### Passo 4 — arrancar sozinho com o Windows
-
-Para deixares de depender de uma janela aberta, instala como serviço (consola **como
-administrador**):
-
-```powershell
-& $CF service install
-```
-
-O `node server.js` também tem de estar a correr — o túnel só encaminha, não serve a app.
-
-#### Opcional — Cloudflare Access (filtrar quem entra)
-
-O plano **Zero Trust gratuito** inclui o Access até **50 utilizadores**: uma camada de
-autenticação **à frente** da app, em que só emails autorizados conseguem ver a página.
-Configura-se em `dash.cloudflare.com` → *Zero Trust* → *Access* → *Applications*.
-
-O custo é atrito: cada jogador faz um código por email **antes** do login da app. Vale a
-pena se te preocupar gente aleatória tropeçar no link; caso contrário, as proteções que
-a app já tem (limite de tentativas, password de 8 caracteres, contactos só com sessão
-iniciada) chegam.
-
-> **Privacidade:** a Cloudflare termina o TLS nos servidores dela, ou seja, vê o tráfego
-> em claro. Para uma liga interna é irrelevante, mas é a diferença face ao Tailscale
-> Funnel, que termina o TLS na tua máquina.
-
-### 4.4 Comparação
-
-| Opção | Sempre no ar | SQLite atual | HTTPS | Endereço fixo | Trabalho |
-|---|---|---|---|---|---|
-| PC + Cloudflare Tunnel | não (só com o PC ligado) | sim, no teu disco | incluído | não (muda) | mínimo |
-| PC + domínio próprio (4.3) | não (só com o PC ligado) | sim, no teu disco | incluído | **sim** | médio (~1 €/ano) |
-| Oracle Always Free | sim | sim | Let's Encrypt | sim | alto (administras tudo) |
-| Render / Koyeb grátis | adormece | **não** (exige mudar de BD) | incluído | sim | médio (migrar a BD) |
-
-### 4.5 Sugestão
-
-Para as primeiras jornadas, **o teu PC com Cloudflare Tunnel**: é gratuito, monta-se em
-minutos, mantém a base de dados contigo e não obriga a mudar nada no código. Se mais
-tarde o jogo pegar e quiseres o site sempre disponível, o passo seguinte natural é o
-VPS gratuito da Oracle — a app corre lá tal como está.
-
-### 4.6 O que mudar antes de expor na internet
-
-Independentemente da opção:
-
-**Já implementado:**
-
-1. **A app só escuta em `127.0.0.1`.** Antes aceitava ligações de qualquer máquina da
-   rede Wi-Fi; agora só do próprio computador. Os túneis (Cloudflare, Tailscale) correm
-   localmente e ligam-se a `127.0.0.1`, por isso continuam a funcionar. Para servir
-   deliberadamente a rede local: `HOST=0.0.0.0 node server.js`.
-2. **Limite de tentativas de login:** 5 falhas por minuto por IP, no `server.js`. À 6ª
-   devolve `429` com o tempo de espera. Não depende de nenhum serviço externo. O IP é
-   lido do `X-Forwarded-For` quando há túnel à frente.
-3. **Password mínima de 8 caracteres** (era 4).
-4. **Contactos de MB WAY só com sessão iniciada.** O `GET /api/jornada` entregava os
-   números de telemóvel a qualquer visitante; agora a lista vai vazia sem login. Os
-   jogos, datas e limites continuam públicos.
-5. **Cookie com a flag `Secure`** quando o pedido chega por HTTPS (deteta o
-   `X-Forwarded-Proto`). Em `localhost`, sem HTTPS, não é adicionada — se fosse, o
-   browser recusava o cookie e o login deixava de funcionar.
-6. **Mesma mensagem de erro** para utilizador inexistente e password errada, para não
-   revelar quem tem conta.
-
-**Por fazer:**
-
-- **Sessões em memória** — um reinício do servidor termina as sessões de todos.
-- **Backups do `totofiegsi.db`** — pelo menos um por jornada.
-- **Código de registo** — hoje qualquer pessoa com o link cria conta e mete apostas no
-  bolo. Uma palavra combinada no registo resolveria.
-- As contas criadas **antes** desta versão mantêm as passwords antigas, que podem ter
-  menos de 8 caracteres: o mínimo só se aplica a registos novos.
+**Limite de tentativas de login:** passou de memória para a tabela `tentativas_login`,
+pela mesma razão.
 
 ---
 
@@ -654,7 +527,8 @@ para o GitHub. A imagem de referência do talão original também fica de fora.
 ## 7. Limitações desta versão
 
 - O pagamento é simulado (secção 5.1): não há cobrança nem confirmação.
-- Sessões guardadas em memória: reiniciar o servidor termina as sessões.
+- Sessões sem estado: o logout apaga o cookie, mas não há revogação do lado do
+  servidor — um cookie roubado vale até expirar (8 horas).
 - Não há registo de resultados nem apuramento automático do vencedor — o cálculo de
   acertos e a divisão do prize pool ainda são feitos à mão.
 - Uma jornada de cada vez: a tabela `apostas` não guarda o match day.

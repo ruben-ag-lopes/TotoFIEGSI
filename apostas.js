@@ -1,19 +1,22 @@
 'use strict';
 
 /*
- * Utilitario de linha de comandos para consultar a base de dados.
+ * Utilitario de linha de comandos para consultar a base de dados (Supabase).
  *
- *   node apostas.js                 -> utilizadores + apostas de todas as jornadas
- *   node apostas.js resumo [MD]     -> apostas e prize pool da jornada (por omissao, a ativa)
- *   node apostas.js chaves [MD]     -> "utilizador chave" da jornada (por omissao, a ativa)
+ *   node --env-file=.env apostas.js              -> utilizadores + apostas de todas as jornadas
+ *   node --env-file=.env apostas.js resumo [MD]  -> apostas e prize pool da jornada (por omissao, a ativa)
+ *   node --env-file=.env apostas.js chaves [MD]  -> "utilizador chave" da jornada (por omissao, a ativa)
+ *
+ * Atalho: npm run apostas -- resumo MD1
  */
 
-const { DatabaseSync } = require('node:sqlite');
+const config = require('./lib/config');
+const db = require('./lib/db');
 const { JORNADA } = require('./jornada');
 const { jornadaPorMatchDay } = require('./jornadas');
 
-// usa o mesmo ficheiro que o servidor (respeita a variavel TOTO_DB)
-const db = new DatabaseSync(require('./db').DB_PATH);
+config.validar();
+
 const comando = (process.argv[2] || 'tudo').toLowerCase();
 const matchDayPedido = process.argv[3];
 
@@ -27,35 +30,61 @@ function resolverJornada(matchDay) {
   return j;
 }
 
-if (comando === 'chaves') {
-  const j = resolverJornada(matchDayPedido);
-  for (const a of db.prepare('SELECT utilizador, chave FROM apostas WHERE jornada = ? ORDER BY id').all(j.matchDay)) {
-    console.log(a.utilizador + ' ' + a.chave);
+(async () => {
+  if (comando === 'chaves') {
+    const j = resolverJornada(matchDayPedido);
+    for (const a of await db.todasAsApostas(j.matchDay)) {
+      console.log(a.utilizador + ' ' + a.chave);
+    }
+    return;
   }
-} else if (comando === 'resumo') {
-  const j = resolverJornada(matchDayPedido);
-  const linhas = db.prepare(
-    'SELECT utilizador, COUNT(*) AS apostas FROM apostas WHERE jornada = ? GROUP BY utilizador ORDER BY apostas DESC'
-  ).all(j.matchDay);
 
-  console.log('-- ' + j.matchDay + ' --');
-  console.table(linhas.map((l) => ({
-    utilizador: l.utilizador,
-    apostas: l.apostas,
-    valor: (l.apostas * j.valorAposta).toFixed(2) + ' EUR'
-  })));
+  if (comando === 'resumo') {
+    const j = resolverJornada(matchDayPedido);
+    const apostas = await db.todasAsApostas(j.matchDay);
 
-  const total = db.prepare('SELECT COUNT(*) AS n FROM apostas WHERE jornada = ?').get(j.matchDay).n;
-  const arrecadado = total * j.valorAposta;
-  const prizePool = arrecadado * (j.percentagemPrizePool / 100);
-  console.log('Total de apostas: ' + total + ' (' + arrecadado.toFixed(2) + ' EUR)');
-  console.log('Prize pool (' + j.percentagemPrizePool + '%): ' + prizePool.toFixed(2) + ' EUR');
-  if (total < j.minimoApostas) {
-    console.log('AVISO: minimo de ' + j.minimoApostas + ' apostas ainda nao atingido - jornada seria cancelada.');
+    const porUtilizador = new Map();
+    for (const a of apostas) {
+      porUtilizador.set(a.utilizador, (porUtilizador.get(a.utilizador) || 0) + 1);
+    }
+
+    console.log('-- ' + j.matchDay + ' --');
+    console.table(
+      [...porUtilizador.entries()]
+        .sort((x, y) => y[1] - x[1])
+        .map(([utilizador, n]) => ({
+          utilizador,
+          apostas: n,
+          valor: (n * j.valorAposta).toFixed(2) + ' EUR'
+        }))
+    );
+
+    const total = apostas.length;
+    const arrecadado = total * j.valorAposta;
+    const prizePool = arrecadado * (j.percentagemPrizePool / 100);
+    console.log('Total de apostas: ' + total + ' (' + arrecadado.toFixed(2) + ' EUR)');
+    console.log('Prize pool (' + j.percentagemPrizePool + '%): ' + prizePool.toFixed(2) + ' EUR');
+    if (total < j.minimoApostas) {
+      console.log('AVISO: minimo de ' + j.minimoApostas + ' apostas ainda nao atingido - jornada seria cancelada.');
+    }
+    return;
   }
-} else {
+
+  const [utilizadores, apostas] = await Promise.all([
+    db.todosOsUtilizadores(),
+    db.todasAsApostas()
+  ]);
+
   console.log('-- utilizadores --');
-  console.table(db.prepare('SELECT utilizador, equipa FROM utilizadores ORDER BY utilizador').all());
+  console.table(utilizadores.map((u) => ({ utilizador: u.utilizador, equipa: u.equipa })));
   console.log('-- apostas (todas as jornadas) --');
-  console.table(db.prepare('SELECT id, utilizador, jornada, chave FROM apostas ORDER BY jornada, id').all());
-}
+  console.table(apostas.map((a) => ({
+    id: a.id,
+    utilizador: a.utilizador,
+    jornada: a.jornada,
+    chave: a.chave
+  })));
+})().catch((err) => {
+  console.error('Falhou: ' + err.message);
+  process.exit(1);
+});
