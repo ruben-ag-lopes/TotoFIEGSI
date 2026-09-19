@@ -892,3 +892,20 @@ td.td-picks { text-align: center; }
 .tabela-jogos tbody tr.jogo-pendente .td-num {
   color: #8a6d00;
 }
+
+/* ---------- Fantasy ---------- */
+.th-numero { text-align: right !important; }
+.td-numero { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.nota-desempate { margin-top: 14px; }
+.nota-desempate strong {
+  display: block;
+  font-size: 12px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--azul);
+  margin-bottom: 6px;
+}
+.nota-desempate ol { margin: 0 0 6px; padding-left: 20px; }
+.nota-desempate li { margin-bottom: 2px; }
+.desempate-nota { margin: 0; font-style: italic; }
