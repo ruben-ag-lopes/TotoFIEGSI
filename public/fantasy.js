@@ -184,8 +184,6 @@ function renderMultas() {
       .filter((e) => (e.porJornada[j] || 0) > 0)
       .sort((a, b) => b.porJornada[j] - a.porJornada[j]);
 
-    const totalJornada = multados.reduce((s, e) => s + e.porJornada[j], 0);
-
     const sec = document.createElement('section');
     sec.className = 'jor-classificacao';
 
@@ -193,13 +191,7 @@ function renderMultas() {
     topo.className = 'ma-topo';
     const h3 = document.createElement('h3');
     h3.textContent = j;
-    const cont = document.createElement('span');
-    cont.className = 'ma-contador';
-    cont.append(String(multados.length) + (multados.length === 1 ? ' multado · ' : ' multados · '));
-    const forte = document.createElement('strong');
-    forte.textContent = euros(totalJornada);
-    cont.appendChild(forte);
-    topo.append(h3, cont);
+    topo.appendChild(h3);
     sec.appendChild(topo);
 
     const t = document.createElement('table');
