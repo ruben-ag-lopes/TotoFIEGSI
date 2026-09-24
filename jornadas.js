@@ -222,6 +222,34 @@ function jornadaPorMatchDay(matchDay) {
   return j ? comConfig(j) : null;
 }
 
+/*
+ * O limiteISO esta escrito em hora de Lisboa e sem fuso ('2026-10-13T17:30:00').
+ * O new Date() le-o na hora do servidor - e o Vercel corre em UTC, o que dava
+ * uma hora de atraso no verao. Aqui converte-se sempre como hora de Lisboa.
+ */
+function instanteEmLisboa(iso) {
+  const [data, hora] = iso.split('T');
+  const [ano, mes, dia] = data.split('-').map(Number);
+  const [h, min, s = 0] = hora.split(':').map(Number);
+  const comoUTC = Date.UTC(ano, mes - 1, dia, h, min, s);
+
+  // que horas marca o relogio de Lisboa nesse instante? a diferenca e o fuso
+  const p = {};
+  new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Lisbon', hourCycle: 'h23',
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: 'numeric', second: 'numeric'
+  }).formatToParts(new Date(comoUTC)).forEach((x) => { p[x.type] = Number(x.value); });
+  const relogioLisboa = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+
+  return comoUTC - (relogioLisboa - comoUTC);
+}
+
+// Passou a data limite de apostas desta jornada?
+function apostasFechadas(jornada, agora = Date.now()) {
+  return agora > instanteEmLisboa(jornada.limiteISO);
+}
+
 // Conta quantos prognosticos de uma chave acertaram nos resultados conhecidos.
 function contarAcertos(chave, jogos) {
   const prognosticos = String(chave).split(';');
@@ -239,5 +267,7 @@ module.exports = {
   jornadaAtiva,
   todasAsJornadas,
   jornadaPorMatchDay,
+  instanteEmLisboa,
+  apostasFechadas,
   contarAcertos
 };

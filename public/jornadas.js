@@ -182,6 +182,24 @@ function blocoClassificacao(j) {
   h3.textContent = 'Classificação';
   sec.appendChild(h3);
 
+  // Antes da data limite o servidor nao envia os palpites de ninguem.
+  if (j.classificacaoVisivel === false) {
+    const p = document.createElement('p');
+    p.className = 'nota-resultados nota-oculta';
+    p.append('Os palpites ficam escondidos até ao fecho das apostas, ');
+    const limite = document.createElement('strong');
+    limite.textContent = j.limiteTexto;
+    p.appendChild(limite);
+    p.append('. Depois disso aparece aqui a chave de cada jogador.');
+    if (j.totalApostas > 0) {
+      p.append(' Para já ' + (j.totalApostas === 1
+        ? 'há 1 aposta registada.'
+        : 'há ' + j.totalApostas + ' apostas registadas.'));
+    }
+    sec.appendChild(p);
+    return sec;
+  }
+
   const lista = j.classificacao || [];
 
   if (!lista.length) {

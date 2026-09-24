@@ -836,6 +836,9 @@ td.td-picks { text-align: center; }
   margin: 0 0 12px;
 }
 
+.nota-oculta { margin: 0; }
+.nota-oculta strong { color: var(--azul); }
+
 .tabela-wrap-simples { border: 0; box-shadow: none; background: transparent; }
 
 .tabela-classificacao { border-collapse: collapse; width: 100%; min-width: 640px; }
@@ -909,3 +912,168 @@ td.td-picks { text-align: center; }
 .nota-desempate ol { margin: 0 0 6px; padding-left: 20px; }
 .nota-desempate li { margin-bottom: 2px; }
 .desempate-nota { margin: 0; font-style: italic; }
+
+/* ---------- Anuncios: cartaz da grande final ---------- */
+.anuncios-lista { display: flex; justify-content: center; }
+
+.cartaz {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  max-width: 520px;
+  aspect-ratio: 4 / 5;
+  padding: 26px 30px 28px;
+  border-radius: 14px;
+  color: var(--branco);
+  background:
+    radial-gradient(110% 60% at 90% 110%, rgba(224, 82, 31, .55), transparent 62%),
+    radial-gradient(80% 55% at 0% 0%, rgba(38, 72, 150, .9), transparent 65%),
+    linear-gradient(165deg, #10244f 0%, var(--azul) 55%, #060d22 100%);
+  box-shadow: 0 18px 40px rgba(11, 27, 63, .28);
+}
+
+/* anel de estrelas ao fundo */
+.cartaz-estrelas {
+  position: absolute;
+  z-index: -1;
+  right: -120px;
+  bottom: -110px;
+  width: 400px;
+  height: 400px;
+  color: rgba(255, 255, 255, .09);
+  fill: rgba(255, 122, 69, .16);
+  transform: rotate(-14deg);
+}
+
+.cartaz-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: auto;
+}
+
+.cartaz-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 1.5px;
+  color: var(--laranja-claro);
+}
+
+.cartaz-marca img { width: 28px; height: 28px; border-radius: 50%; }
+
+.cartaz-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 20px;
+}
+
+.cartaz-kicker {
+  margin: 28px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--laranja-claro);
+}
+
+.cartaz-titulo,
+.cartaz-dia,
+.cartaz-mes strong {
+  font-family: "Anton", "Arial Narrow", "Segoe UI", sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.cartaz-titulo {
+  margin: 0;
+  font-size: clamp(48px, 13vw, 76px);
+  line-height: .95;
+  letter-spacing: .5px;
+}
+
+.cartaz-data {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 14px 0 10px;
+}
+
+.cartaz-dia {
+  font-size: clamp(110px, 32vw, 168px);
+  line-height: .85;
+  color: var(--laranja-claro);
+  text-shadow: 0 6px 30px rgba(224, 82, 31, .45);
+}
+
+.cartaz-mes {
+  display: flex;
+  flex-direction: column;
+  padding-left: 16px;
+  border-left: 3px solid var(--laranja);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .75);
+}
+
+.cartaz-mes strong {
+  font-size: 40px;
+  line-height: 1.05;
+  letter-spacing: 1px;
+  color: var(--branco);
+}
+
+.cartaz-chamada {
+  margin: 6px 0 22px;
+  max-width: 34ch;
+  font-size: 16px;
+  color: rgba(255, 255, 255, .88);
+}
+
+.cartaz-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, .2);
+}
+
+.cartaz-info dt {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .6);
+}
+
+.cartaz-info dd { margin: 2px 0 0; font-size: 16px; font-weight: 700; }
+
+.cartaz-contagem {
+  align-self: flex-start;
+  margin: 18px 0 0;
+  padding: 7px 14px;
+  border-radius: 20px;
+  background: var(--laranja);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 480px) {
+  .cartaz { aspect-ratio: auto; padding: 22px 20px 24px; }
+  .cartaz-mes strong { font-size: 32px; }
+}
