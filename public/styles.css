@@ -1077,3 +1077,162 @@ td.td-picks { text-align: center; }
   .cartaz { aspect-ratio: auto; padding: 22px 20px 24px; }
   .cartaz-mes strong { font-size: 32px; }
 }
+
+/* ==========================================================================
+   Telemovel e ecras estreitos
+   No computador nada muda. Abaixo dos 900px o menu passa para uma segunda
+   linha; abaixo dos 600px as tabelas largas viram cartoes, para nunca ser
+   preciso arrastar a pagina (ou uma tabela) para o lado.
+   ========================================================================== */
+@media (max-width: 900px) {
+  .topbar { flex-wrap: wrap; row-gap: 8px; padding: 10px 16px; }
+  .menu { order: 3; flex-basis: 100%; margin: 0; }
+}
+
+@media (max-width: 600px) {
+  /* --- topo: marca e sessao em cima, menu em 4 botoes iguais --- */
+  .marca-txt { font-size: 18px; }
+  .topbar-nav { gap: 10px; font-size: 13px; }
+  .menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .menu a { padding: 8px 2px; text-align: center; font-size: 13px; }
+  .menu-pre { display: none; }
+
+  .pagina { margin-top: 16px; padding: 0 16px; }
+  .pagina-topo h1 { font-size: 22px; }
+
+  .toasts { top: 12px; left: 12px; right: 12px; }
+  .toast { min-width: 0; max-width: none; }
+
+  /* --- boletim --- */
+  .boletim-cabecalho { padding: 14px 16px; }
+  .cab-titulo { font-size: 24px; }
+  .info-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+  .info-cartao { padding: 10px 12px; }
+  .info-valor { font-size: 15px; }
+  .barra-accao { padding: 14px 16px; }
+  .botoes { width: 100%; }
+  .botoes .btn { flex: 1; padding: 12px 10px; }
+
+  /* separadores */
+  #abas-jornadas { display: grid; grid-template-columns: repeat(4, 1fr); }
+  #abas-jornadas .aba-jornada { padding: 9px 4px; }
+  #abas-fantasy .aba-jornada { flex: 1; }
+
+  /* --- jogos (boletim e jornadas): cada jogo e um cartao ---
+     numero | equipas por cima da data | 1 X 2 */
+  .boletim.uma-coluna,
+  .boletim.uma-coluna thead,
+  .boletim.uma-coluna tbody,
+  .tabela-jogos,
+  .tabela-jogos thead,
+  .tabela-jogos tbody { display: block; min-width: 0; }
+
+  .boletim.uma-coluna tr { display: grid; grid-template-columns: 30px minmax(0, 1fr) 142px; align-items: center; }
+  .tabela-jogos tr { display: grid; grid-template-columns: 30px minmax(0, 1fr) 96px; align-items: center; }
+
+  .boletim.uma-coluna thead th.th-jogo { grid-column: 1 / 3; padding-left: 12px; }
+  .tabela-jogos thead th:nth-child(3) { display: none; }
+  /* o fundo vai na linha: as celulas do cabecalho podem ter alturas diferentes */
+  .boletim.uma-coluna thead tr,
+  .tabela-jogos thead tr { background: var(--azul); }
+
+  .boletim.uma-coluna tbody tr,
+  .tabela-jogos tbody tr {
+    grid-template-areas: "num jogo fim" "num data fim";
+    padding: 8px 0;
+    border-top: 1px solid var(--cinza-linha);
+  }
+  .boletim.uma-coluna tbody tr.inicio-bloco,
+  .tabela-jogos tbody tr.inicio-bloco { border-top: 2px solid var(--azul); }
+  .boletim.uma-coluna tbody tr > td,
+  .boletim.tabela-jogos tbody tr > td { border-top: 0; padding: 0; }
+
+  .boletim.uma-coluna td.td-num,
+  .boletim.tabela-jogos td.td-num { grid-area: num; width: auto; }
+  .boletim.uma-coluna td.td-jogo,
+  .boletim.tabela-jogos td.td-jogo { grid-area: jogo; white-space: normal; line-height: 1.3; padding: 0 8px 0 2px; }
+  .boletim.uma-coluna td.td-data,
+  .boletim.tabela-jogos td.td-data { grid-area: data; padding: 2px 8px 0 2px; }
+  .boletim.uma-coluna td.td-picks,
+  .boletim.tabela-jogos td.td-resultado { grid-area: fim; padding: 0 10px 0 0; text-align: right; }
+
+  /* botoes 1 X 2 do tamanho de um dedo */
+  .boletim.uma-coluna .tri { gap: 4px; padding: 3px; }
+  .boletim.uma-coluna .pick { width: 38px; height: 36px; font-size: 14px; }
+
+  /* --- as minhas apostas --- */
+  .minhas-apostas { padding: 14px 16px 16px; }
+  .ma-linha { min-width: 0; flex-wrap: wrap; gap: 4px; }
+  .ma-etq { flex-basis: 100%; width: auto; }
+  .ma-legenda .ma-etq { display: none; }
+
+  /* --- classificacoes: uma linha por cartao, sem cabecalho --- */
+  .jor-classificacao { padding: 14px 16px 16px; }
+  .tabela-classificacao { min-width: 0; }
+  .tabela-palpites, .tabela-palpites tbody,
+  .tabela-fantasy, .tabela-fantasy tbody,
+  .tabela-multas, .tabela-multas tbody { display: block; }
+  .tabela-palpites thead,
+  .tabela-fantasy thead,
+  .tabela-multas thead { display: none; }
+  .tabela-palpites tbody td,
+  .tabela-fantasy tbody td,
+  .tabela-multas tbody td { border: 0; padding: 0; }
+  .tabela-palpites .td-jogador,
+  .tabela-fantasy .td-jogador,
+  .tabela-multas .td-jogador { white-space: normal; overflow-wrap: anywhere; }
+
+  /* jornadas: posicao | jogador e equipa | acertos, e a chave por baixo */
+  .tabela-palpites tr {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr) auto;
+    grid-template-areas: "pos jogador acertos" "pos equipa acertos" "pos chave chave";
+    align-items: center;
+    column-gap: 6px;
+    padding: 10px 4px;
+    border-top: 1px solid var(--cinza-linha);
+  }
+  .tabela-palpites .td-num { grid-area: pos; align-self: start; width: auto; }
+  .tabela-palpites .td-jogador { grid-area: jogador; }
+  .tabela-palpites .td-equipa { grid-area: equipa; font-size: 12px; }
+  .tabela-palpites .td-acertos { grid-area: acertos; font-size: 16px; }
+  .tabela-palpites .td-chave { grid-area: chave; padding-top: 8px; }
+
+  /* fantasy: posicao | equipa e total, craque por baixo, pontos por jornada no fim */
+  .tabela-fantasy tr {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 10px;
+    padding: 9px 4px 9px 34px;
+    border-top: 1px solid var(--cinza-linha);
+  }
+  .tabela-fantasy .td-num { position: absolute; left: 4px; top: 9px; width: 24px; }
+  .tabela-fantasy .td-jogador { order: 1; flex: 1; min-width: 0; }
+  .tabela-fantasy .td-acertos { order: 2; font-size: 16px; }
+  .tabela-fantasy .td-acertos::before {
+    content: "Total ";
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--cinza-texto);
+  }
+  .tabela-fantasy .td-equipa { order: 3; flex-basis: 100%; font-size: 12px; }
+  .tabela-fantasy .td-numero { order: 4; font-size: 12px; color: var(--cinza-texto); }
+  .tabela-fantasy .td-numero::before { content: attr(data-rotulo) " "; font-weight: 700; }
+
+  /* multas: equipa e craque | valor | estado */
+  .tabela-multas tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "equipa valor estado" "craque valor estado";
+    align-items: center;
+    column-gap: 10px;
+    padding: 9px 4px;
+    border-top: 1px solid var(--cinza-linha);
+  }
+  .tabela-multas .td-jogador { grid-area: equipa; }
+  .tabela-multas .td-equipa { grid-area: craque; font-size: 12px; }
+  .tabela-multas td:nth-child(3) { grid-area: valor; }
+  .tabela-multas td:nth-child(4) { grid-area: estado; }
+}

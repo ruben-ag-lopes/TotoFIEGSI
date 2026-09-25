@@ -90,7 +90,7 @@ function renderClassificacao() {
   sec.appendChild(topo);
 
   const t = document.createElement('table');
-  t.className = 'tabela-classificacao';
+  t.className = 'tabela-classificacao tabela-fantasy';
 
   const thead = document.createElement('thead');
   const trh = document.createElement('tr');
@@ -127,6 +127,7 @@ function renderClassificacao() {
     colunas.forEach((j) => {
       const td = document.createElement('td');
       td.className = 'td-numero';
+      td.dataset.rotulo = j; // no telemovel nao ha cabecalho: a celula diz a jornada
       td.textContent = numeroPT(e.porJornada[j]);
       tr.appendChild(td);
     });
@@ -195,7 +196,7 @@ function renderMultas() {
     sec.appendChild(topo);
 
     const t = document.createElement('table');
-    t.className = 'tabela-classificacao';
+    t.className = 'tabela-classificacao tabela-multas';
 
     const thead = document.createElement('thead');
     const trh = document.createElement('tr');

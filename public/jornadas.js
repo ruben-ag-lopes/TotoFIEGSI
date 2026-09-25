@@ -222,7 +222,7 @@ function blocoClassificacao(j) {
   const maximo = lista.length ? lista[0].acertos : 0;
 
   const t = document.createElement('table');
-  t.className = 'tabela-classificacao';
+  t.className = 'tabela-classificacao tabela-palpites';
 
   const thead = document.createElement('thead');
   const trh = document.createElement('tr');

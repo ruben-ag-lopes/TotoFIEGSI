@@ -123,6 +123,9 @@ function renderTabela() {
   head.textContent = '';
   head.appendChild(trh);
 
+  // com uma so coluna, no telemovel cada jogo vira um cartao (ver styles.css)
+  $('boletim').classList.toggle('uma-coluna', j.colunas === 1);
+
   // linhas: um jogo por linha
   const body = $('boletim-body');
   body.textContent = '';
