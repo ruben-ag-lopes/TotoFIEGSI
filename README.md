@@ -297,8 +297,29 @@ casa, `'x'` empate, `'2'` vitória do visitante. Fica `null` enquanto não se so
 { n: 1, casa: 'Porto', fora: 'Manchester City', data: '2026-09-08', hora: '20:00', dia: 'Ter', resultado: '1' },
 ```
 
-Reinicia o servidor e a classificação aparece calculada na página Jornadas — para
-qualquer jornada, a qualquer momento, a partir das apostas guardadas na base de dados.
+**Onde:** no ficheiro `jornadas.js`, na raiz do projeto, dentro da jornada em causa
+(`matchDay: 'MD2'`, `'MD3'`, ...). É o **único** sítio onde se escrevem resultados — não
+há painel de administração nem folha a ler.
+
+**Passo a passo, jogo a jogo ou no fim do dia:**
+
+1. Abre `jornadas.js` e procura o `matchDay` da jornada.
+2. Em cada jogo já terminado, troca `resultado: null` por `'1'`, `'x'` ou `'2'`.
+   Conta o resultado **aos 90 minutos** (prolongamento e penáltis não contam).
+   Podes lançar só alguns jogos: os que ficarem a `null` contam como "por jogar" e a
+   classificação vai-se atualizando à medida que os preenches.
+3. Publica: `git add jornadas.js`, `git commit -m "Resultados MD2"` e `git push`
+   (secção B abaixo). Em local, basta reiniciar o servidor.
+4. Passados ~1 minuto, a página **Jornadas** mostra os acertos de cada jogador.
+
+Não mexas na ordem dos jogos nem no `n`: a chave de cada jogador (`1;x;2;...`) é
+comparada com os resultados **por posição**.
+
+A classificação (e a chave de cada jogador) só aparece depois da `limiteISO` da
+jornada; antes disso o servidor não envia os palpites a ninguém.
+
+Os acertos são calculados ao vivo a partir das apostas guardadas na base de dados, para
+qualquer jornada, a qualquer momento.
 
 ### 3.2 Fechar uma jornada e abrir a seguinte
 
@@ -346,7 +367,10 @@ não vitalício.
   (`1;2;x;...`), por isso é a mesma ordem que usas para conferir os resultados.
 - `data` no formato `AAAA-MM-DD` e `hora` em `HH:MM`; `dia` é a abreviatura mostrada.
 - `limiteISO` é a data/hora a que as apostas fecham (por norma, 17H30 do dia do
-  primeiro jogo). `limiteTexto` é só o texto apresentado; convém manterem-se coerentes.
+  primeiro jogo), **sempre em hora de Portugal** (escreve-a sem fuso, como está). O
+  servidor converte-a para um instante absoluto, por isso fecha à mesma hora para toda a
+  gente: 17H30 em Portugal = 18H30 em Espanha. Quem está noutro fuso vê também a sua hora
+  no boletim. `limiteTexto` é só o texto apresentado; convém manterem-se coerentes.
 - Os jogos são agrupados visualmente por dia: basta estarem ordenados por data.
 - **`matchDay` tem de ser único** entre todas as jornadas do array — é o que liga cada
   aposta guardada à jornada correta.
