@@ -188,7 +188,7 @@ function blocoClassificacao(j) {
     p.className = 'nota-resultados nota-oculta';
     p.append('Os palpites ficam escondidos até ao fecho das apostas, ');
     const limite = document.createElement('strong');
-    limite.textContent = j.limiteTexto;
+    limite.textContent = j.limiteTexto + ' (hora de Portugal)';
     p.appendChild(limite);
     p.append('. Depois disso aparece aqui a chave de cada jogador.');
     if (j.totalApostas > 0) {

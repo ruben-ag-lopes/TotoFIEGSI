@@ -27,6 +27,22 @@ function dataCurta(iso) {
   return dia + '/' + mes;
 }
 
+// O limite esta em hora de Portugal. Quem esta noutro fuso (Espanha, por
+// exemplo) ve tambem a hora equivalente no seu relogio.
+function limiteLegivel(j) {
+  const base = j.limiteTexto + ' (hora de Portugal)';
+  const hora = (tz) => new Intl.DateTimeFormat('pt-PT', {
+    timeZone: tz, hour: '2-digit', minute: '2-digit'
+  }).format(j.limiteMs);
+  try {
+    const local = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (local && hora(local) !== hora('Europe/Lisbon')) {
+      return base + ' · na tua hora: ' + hora(local).replace(':', 'H');
+    }
+  } catch (_) { /* sem Intl: fica so a hora de Portugal */ }
+  return base;
+}
+
 function toast(titulo, texto, tipo) {
   const div = document.createElement('div');
   div.className = 'toast' + (tipo ? ' ' + tipo : '');
@@ -86,11 +102,11 @@ function renderCabecalho() {
   $('cab-competicao').textContent = j.competicao + ' · ' + j.epoca;
   $('cab-md').textContent = 'MATCH DAY ' + j.matchDay;
   $('cab-epoca').textContent = j.epoca;
-  $('cab-limite').textContent = 'Em jogo até ' + j.limiteTexto;
+  $('cab-limite').textContent = 'Em jogo até ' + limiteLegivel(j);
   $('info-md').textContent = j.matchDay;
   $('info-epoca').textContent = 'Época ' + j.epoca;
   $('info-datas').textContent = j.periodo;
-  $('info-limite').textContent = j.limiteTexto;
+  $('info-limite').textContent = limiteLegivel(j);
   $('info-valor').textContent = j.valorAposta.toFixed(2).replace('.', ',') + ' €';
   $('aviso-max').textContent = String(j.maxApostasPorUtilizador);
 
@@ -402,7 +418,7 @@ function renderSessao() {
 /* ---------- contagem decrescente ate ao limite ---------- */
 
 function atualizarContagem() {
-  const alvo = new Date(estado.jornada.limiteISO).getTime();
+  const alvo = estado.jornada.limiteMs; // instante absoluto: igual em qualquer fuso
   const falta = alvo - Date.now();
   const el = $('info-contagem');
 
@@ -681,7 +697,7 @@ async function iniciar() {
 
   if (jornada.fechada) {
     $('btn-apostar').disabled = true;
-    toast('Apostas encerradas', 'O prazo terminou em ' + jornada.limiteTexto + '.', 'erro');
+    toast('Apostas encerradas', 'O prazo terminou em ' + limiteLegivel(jornada) + '.', 'erro');
   }
 
   // regresso do login com uma aposta pendente
