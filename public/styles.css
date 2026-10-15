@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    TotoFIEGSI - folha de estilo
    ========================================================================== */
 
@@ -1218,6 +1218,8 @@ td.td-picks { text-align: center; }
     color: var(--cinza-texto);
   }
   .tabela-fantasy .td-equipa { order: 3; flex-basis: 100%; font-size: 12px; }
+  .tabela-fantasy.tabela-jornada .td-acertos.td-numero { order: 2; font-size: 16px; color: var(--azul); }
+  .tabela-fantasy.tabela-jornada .td-numero::before { content: "Pontos "; font-weight: 600; font-size: 11px; color: var(--cinza-texto); }
   .tabela-fantasy .td-numero { order: 4; font-size: 12px; color: var(--cinza-texto); }
   .tabela-fantasy .td-numero::before { content: attr(data-rotulo) " "; font-weight: 700; }
 

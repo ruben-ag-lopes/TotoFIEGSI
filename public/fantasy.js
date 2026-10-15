@@ -29,6 +29,12 @@ function jornadasComDados(jornadas, equipas) {
   );
 }
 
+/** A jornada mais recente com valores lançados (as colunas vêm por ordem). */
+function ultimaJornada(jornadas, equipas) {
+  const com = jornadasComDados(jornadas, equipas);
+  return com.length ? com[com.length - 1] : null;
+}
+
 /* ---------- criterios de desempate ---------- */
 
 function caixaDesempate() {
@@ -60,6 +66,70 @@ function caixaDesempate() {
 
 /* ---------- classificacao ---------- */
 
+// Tabela com os pontos de uma só jornada, da melhor para a pior equipa.
+function blocoJornada(lista, jornada) {
+  const ordenada = lista
+    .filter((e) => e.porJornada[jornada] !== null && e.porJornada[jornada] !== undefined)
+    .sort((a, b) => b.porJornada[jornada] - a.porJornada[jornada]);
+  const maximo = ordenada.length ? ordenada[0].porJornada[jornada] : 0;
+
+  const sec = document.createElement('section');
+  sec.className = 'jor-classificacao';
+
+  const topo = document.createElement('div');
+  topo.className = 'ma-topo';
+  const h3 = document.createElement('h3');
+  h3.textContent = 'Classificação da jornada ' + jornada;
+  topo.appendChild(h3);
+  sec.appendChild(topo);
+
+  const t = document.createElement('table');
+  t.className = 'tabela-classificacao tabela-fantasy tabela-jornada';
+
+  const thead = document.createElement('thead');
+  const trh = document.createElement('tr');
+  ['#', 'Equipa', 'Craque', 'Pontos'].forEach((txt, i) => {
+    const th = document.createElement('th');
+    th.textContent = txt;
+    if (i === 3) th.className = 'th-numero';
+    trh.appendChild(th);
+  });
+  thead.appendChild(trh);
+  t.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  ordenada.forEach((e, i) => {
+    const tr = document.createElement('tr');
+    if (e.porJornada[jornada] === maximo && maximo > 0) tr.className = 'lidera';
+
+    const tdPos = document.createElement('td');
+    tdPos.className = 'td-num';
+    tdPos.textContent = String(i + 1);
+
+    const tdEq = document.createElement('td');
+    tdEq.className = 'td-jogador';
+    tdEq.textContent = e.equipa;
+
+    const tdCr = document.createElement('td');
+    tdCr.className = 'td-equipa';
+    tdCr.textContent = e.craque || '—';
+
+    const tdPts = document.createElement('td');
+    tdPts.className = 'td-acertos td-numero';
+    tdPts.textContent = numeroPT(e.porJornada[jornada]);
+
+    tr.append(tdPos, tdEq, tdCr, tdPts);
+    tbody.appendChild(tr);
+  });
+  t.appendChild(tbody);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'tabela-wrap tabela-wrap-simples';
+  wrap.appendChild(t);
+  sec.appendChild(wrap);
+  return sec;
+}
+
 function renderClassificacao() {
   const d = estado.dados;
   const alvo = $('conteudo-fantasy');
@@ -75,6 +145,10 @@ function renderClassificacao() {
   }
 
   const colunas = jornadasComDados(d.jornadasPontos, lista);
+
+  // primeiro a jornada mais recente, depois a classificação geral
+  const ultima = ultimaJornada(d.jornadasPontos, lista);
+  if (ultima) alvo.appendChild(blocoJornada(lista, ultima));
 
   const sec = document.createElement('section');
   sec.className = 'jor-classificacao';
@@ -169,13 +243,17 @@ function renderMultas() {
   const equipas = d.multas.equipas;
   const jornadas = jornadasComDados(d.multas.jornadas, equipas);
 
-  // uma tabela por jornada, só com quem foi multado nessa jornada
-  const comMultas = jornadas.filter((j) => equipas.some((e) => (e.porJornada[j] || 0) > 0));
+  // só a jornada mais recente, e só com quem foi multado nela
+  const recente = jornadas.length ? jornadas[jornadas.length - 1] : null;
+  const comMultas = recente && equipas.some((e) => (e.porJornada[recente] || 0) > 0)
+    ? [recente] : [];
 
   if (!comMultas.length) {
     const p = document.createElement('p');
     p.className = 'ma-vazio';
-    p.textContent = 'Ainda não há multas lançadas.';
+    p.textContent = recente
+      ? 'Ninguém foi multado na jornada ' + recente + '.'
+      : 'Ainda não há multas lançadas.';
     alvo.appendChild(p);
     return;
   }
