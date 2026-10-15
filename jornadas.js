@@ -68,10 +68,10 @@ const JORNADAS = [
     limiteTexto: 'Terça-feira, 13/10/2026 às 17H30',
     jogos: [
       { n:  1, casa: 'Lens',              fora: 'Sporting',          data: '2026-10-13', hora: '20:00', dia: 'Ter', resultado: '2' },
-      { n:  2, casa: 'Roma',              fora: 'Real Madrid',       data: '2026-10-13', hora: '20:00', dia: 'Ter', resultado: null },
+      { n:  2, casa: 'Roma',              fora: 'Real Madrid',       data: '2026-10-13', hora: '20:00', dia: 'Ter', resultado: '2' },
       { n:  3, casa: 'Galatasaray',       fora: 'Barcelona',         data: '2026-10-13', hora: '20:00', dia: 'Ter', resultado: '2' },
-      { n:  4, casa: 'Manchester City',   fora: 'PSG',               data: '2026-10-13', hora: '20:00', dia: 'Ter', resultado: null },
-      { n:  5, casa: 'Real Betis',        fora: 'Porto',             data: '2026-10-13', hora: '20:00', dia: 'Ter', resultado: null },
+      { n:  4, casa: 'Manchester City',   fora: 'PSG',               data: '2026-10-13', hora: '20:00', dia: 'Ter', resultado: '2' },
+      { n:  5, casa: 'Real Betis',        fora: 'Porto',             data: '2026-10-13', hora: '20:00', dia: 'Ter', resultado: '1' },
       { n:  6, casa: 'Arsenal',           fora: 'Lille',             data: '2026-10-14', hora: '20:00', dia: 'Qua', resultado: '1' },
       { n:  7, casa: 'Atlético Madrid',   fora: 'Manchester United', data: '2026-10-14', hora: '20:00', dia: 'Qua', resultado: '1' },
       { n:  8, casa: 'Inter',             fora: 'Club Brugge',       data: '2026-10-14', hora: '20:00', dia: 'Qua', resultado: '2' },
