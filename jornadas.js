@@ -62,7 +62,7 @@ const JORNADAS = [
   },
   {
     matchDay: 'MD2',
-    ativa: true,
+    ativa: false,
     periodo: '13 e 14 de outubro de 2026',
     limiteISO: '2026-10-13T17:30:00',
     limiteTexto: 'Terça-feira, 13/10/2026 às 17H30',
@@ -81,19 +81,19 @@ const JORNADAS = [
   },
   {
     matchDay: 'MD3',
-    ativa: false,
+    ativa: true,
     periodo: '20 e 21 de outubro de 2026',
     limiteISO: '2026-10-20T17:30:00',
     limiteTexto: 'Terça-feira, 20/10/2026 às 17H30',
     jogos: [
       { n:  1, casa: 'Porto',             fora: 'PSV Eindhoven',     data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
-      { n:  2, casa: 'Real Madrid',       fora: 'Leipzig',           data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
-      { n:  3, casa: 'PSG',               fora: 'Barcelona',         data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
-      { n:  4, casa: 'Sporting',          fora: 'LASK',              data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
-      { n:  5, casa: 'Liverpool',         fora: 'Villarreal',        data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
-      { n:  6, casa: 'Manchester City',   fora: 'AEK Athens',        data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: null },
-      { n:  7, casa: 'Napoli',            fora: 'Bodø/Glimt',        data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: null },
-      { n:  8, casa: 'Stuttgart',         fora: 'Atlético Madrid',   data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: null },
+      { n:  2, casa: 'PSG',               fora: 'Barcelona',         data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
+      { n:  3, casa: 'Liverpool',         fora: 'Villarreal',        data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
+      { n:  4, casa: 'Manchester City',   fora: 'AEK Athens',        data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
+      { n:  5, casa: 'Napoli',            fora: 'Bodø/Glimt',        data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
+      { n:  6, casa: 'Stuttgart',         fora: 'Atlético Madrid',   data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
+      { n:  7, casa: 'Real Madrid',       fora: 'Leipzig',           data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: null },
+      { n:  8, casa: 'Sporting',          fora: 'LASK',              data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: null },
       { n:  9, casa: 'Bayern Munich',     fora: 'Arsenal',           data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: null },
       { n: 10, casa: 'Aston Villa',       fora: 'Viking',            data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: null }
     ]
