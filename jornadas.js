@@ -88,7 +88,7 @@ const JORNADAS = [
     jogos: [
       { n:  1, casa: 'Porto',             fora: 'PSV Eindhoven',     data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
       { n:  2, casa: 'PSG',               fora: 'Barcelona',         data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
-      { n:  3, casa: 'Liverpool',         fora: 'Villarreal',        data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
+      { n:  3, casa: 'Liverpool',         fora: 'Villarreal',        data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: '1' },
       { n:  4, casa: 'Manchester City',   fora: 'AEK Athens',        data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
       { n:  5, casa: 'Napoli',            fora: 'Bodø/Glimt',        data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
       { n:  6, casa: 'Stuttgart',         fora: 'Atlético Madrid',   data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: null },
