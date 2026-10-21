@@ -190,7 +190,7 @@ const JORNADAS = [
       { n:  7, casa: 'PSV Eindhoven',     fora: 'Stuttgart',         data: '2027-01-27', hora: '20:00', dia: 'Qua', resultado: null },
       { n:  8, casa: 'Slavia Praha',      fora: 'Aston Villa',       data: '2027-01-27', hora: '20:00', dia: 'Qua', resultado: null },
       { n:  9, casa: 'Villarreal',        fora: 'Manchester United', data: '2027-01-27', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 10, casa: 'Paris Saint-Germain', fora: 'Galatasaray',       data: '2027-01-27', hora: '20:00', dia: 'Qua', resultado: null }
+      { n: 10, casa: 'LASK',              fora: 'Porto',             data: '2027-01-27', hora: '20:00', dia: 'Qua', resultado: null }
     ]
   }
 ];
