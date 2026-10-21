@@ -92,10 +92,10 @@ const JORNADAS = [
       { n:  4, casa: 'Manchester City',   fora: 'AEK Athens',        data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: '1' },
       { n:  5, casa: 'Napoli',            fora: 'Bodø/Glimt',        data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: '1' },
       { n:  6, casa: 'Stuttgart',         fora: 'Atlético Madrid',   data: '2026-10-20', hora: '20:00', dia: 'Ter', resultado: 'x' },
-      { n:  7, casa: 'Real Madrid',       fora: 'Leipzig',           data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: null },
-      { n:  8, casa: 'Sporting',          fora: 'LASK',              data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: null },
-      { n:  9, casa: 'Bayern Munich',     fora: 'Arsenal',           data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 10, casa: 'Aston Villa',       fora: 'Viking',            data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: null }
+      { n:  7, casa: 'Real Madrid',       fora: 'Leipzig',           data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: '1' },
+      { n:  8, casa: 'Sporting',          fora: 'LASK',              data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: '2' },
+      { n:  9, casa: 'Bayern Munich',     fora: 'Arsenal',           data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: 'x' },
+      { n: 10, casa: 'Aston Villa',       fora: 'Viking',            data: '2026-10-21', hora: '20:00', dia: 'Qua', resultado: '1' }
     ]
   },
   {
