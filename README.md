@@ -67,7 +67,7 @@ sql/
   esquema.sql    tabelas + RLS, para correr no SQL Editor do Supabase
 public/          frontend (servido como estático pelo Vercel)
 jornadas.js      TODAS as jornadas: jogos e resultados  <-- é aqui que se muda tudo
-jornada.js       atalho para a jornada com ativa: true
+jornada.js       atalho para a jornada ativa (calculada sozinha)
 server.js        servidor local, para desenvolvimento
 migrar.js        migração única do SQLite antigo para o Supabase
 apostas.js       utilitário de consulta pelo terminal
@@ -276,7 +276,7 @@ from apostas group by jornada, utilizador order by jornada, apostas desc;
 
 Toda a informação das jornadas está em **[jornadas.js](jornadas.js)** — presentes e
 passadas, com os jogos e os resultados. O `jornada.js` é apenas um atalho para a
-jornada que tem `ativa: true`.
+jornada ativa, que é calculada automaticamente (ver 3.2).
 
 As apostas de **todas** as jornadas ficam sempre na base de dados, marcadas com o
 match day a que pertencem (coluna `jornada` da tabela `apostas` — ver secção 2). Por
@@ -331,28 +331,13 @@ qualquer jornada, a qualquer momento.
 npm run apostas -- resumo MD1
 ```
 
-**3) Fecha a jornada e abre a próxima**, editando `jornadas.js`:
+**3) A jornada seguinte abre sozinha.** Não é preciso editar `ativa`: a jornada
+ativa é a primeira cujo prazo ainda não passou, e só avança quando a anterior tem
+todos os resultados lançados. Por isso, quando lanças o último resultado da MD3, a MD4
+passa a ser a jornada em jogo.
 
-```js
-const JORNADAS = [
-  {
-    matchDay: 'MD1',
-    ativa: false,              // <- deixa de ser a jornada em jogo
-    // ... jogos com os resultados preenchidos
-  },
-  {
-    matchDay: 'MD2',           // <- a nova
-    ativa: true,
-    periodo: '29 setembro a 1 de outubro de 2026',
-    limiteISO: '2026-09-29T17:30:00',
-    limiteTexto: 'Terça-feira, 29/09/2026 às 17H30',
-    jogos: [
-      { n: 1, casa: 'Equipa A', fora: 'Equipa B', data: '2026-09-29', hora: '20:00', dia: 'Ter', resultado: null },
-      // ... todos os jogos da jornada, numerados de 1 a N (N = 14 a partir da MD4)
-    ]
-  }
-];
-```
+**Antes de a jornada seguinte abrir, acrescenta-a ao array `JORNADAS`** (com os jogos,
+`resultado: null`, `matchDay` único, `limiteISO` e `limiteTexto`), por ordem de data.
 
 **4) Reinicia o servidor** e confirma o novo match day no boletim.
 
@@ -392,8 +377,7 @@ Ficam no objeto `CONFIG`, no topo de `jornadas.js`:
 ### 3.5 Checklist rápida
 
 - [ ] resultados da jornada anterior preenchidos
-- [ ] jornada anterior com `ativa: false`
-- [ ] nova jornada com todos os jogos da jornada, `ativa: true` e `matchDay` único
+- [ ] nova jornada com todos os jogos da jornada e `matchDay` único
 - [ ] `limiteISO` e `limiteTexto` coerentes
 - [ ] servidor reiniciado e página verificada
 

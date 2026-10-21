@@ -9,9 +9,10 @@
  * nem para apagar.
  *
  * Para abrir uma nova jornada:
- *   1. poe  ativa: false  na jornada atual e preenche os resultados
- *   2. acrescenta a nova ao fim do array, com  ativa: true
- *   3. reinicia o servidor
+ *   1. acrescenta a nova ao fim do array (com os 10 ou mais jogos e resultado: null)
+ *   2. preenche os resultados da jornada atual
+ *   3. quando todos os resultados estiverem lancados, a seguinte fica ativa sozinha
+ *   4. reinicia o servidor
  *
  * O resultado de cada jogo e '1' (casa), 'x' (empate), '2' (fora) ou null
  * enquanto nao se souber. Ver o README, seccao 3.
@@ -43,7 +44,6 @@ const CONFIG = {
 const JORNADAS = [
   {
     matchDay: 'MD1',
-    ativa: false,
     periodo: '8 a 10 de setembro de 2026',
     limiteISO: '2026-09-08T17:30:00',
     limiteTexto: 'Terça-feira, 08/09/2026 às 17H30',
@@ -62,7 +62,6 @@ const JORNADAS = [
   },
   {
     matchDay: 'MD2',
-    ativa: false,
     periodo: '13 e 14 de outubro de 2026',
     limiteISO: '2026-10-13T17:30:00',
     limiteTexto: 'Terça-feira, 13/10/2026 às 17H30',
@@ -81,7 +80,6 @@ const JORNADAS = [
   },
   {
     matchDay: 'MD3',
-    ativa: true,
     periodo: '20 e 21 de outubro de 2026',
     limiteISO: '2026-10-20T17:30:00',
     limiteTexto: 'Terça-feira, 20/10/2026 às 17H30',
@@ -100,7 +98,6 @@ const JORNADAS = [
   },
   {
     matchDay: 'MD4',
-    ativa: false,
     periodo: '3 e 4 de novembro de 2026',
     limiteISO: '2026-11-03T17:30:00',
     limiteTexto: 'Terça-feira, 03/11/2026 às 17H30',
@@ -125,7 +122,6 @@ const JORNADAS = [
   },
   {
     matchDay: 'MD5',
-    ativa: false,
     periodo: '24 e 25 de novembro de 2026',
     limiteISO: '2026-11-24T17:30:00',
     limiteTexto: 'Terça-feira, 24/11/2026 às 17H30',
@@ -150,7 +146,6 @@ const JORNADAS = [
   },
   {
     matchDay: 'MD6',
-    ativa: false,
     periodo: '8 e 9 de dezembro de 2026',
     limiteISO: '2026-12-08T17:30:00',
     limiteTexto: 'Terça-feira, 08/12/2026 às 17H30',
@@ -175,7 +170,6 @@ const JORNADAS = [
   },
   {
     matchDay: 'MD7',
-    ativa: false,
     periodo: '19 e 20 de janeiro de 2027',
     limiteISO: '2027-01-19T17:30:00',
     limiteTexto: 'Terça-feira, 19/01/2027 às 17H30',
@@ -200,7 +194,6 @@ const JORNADAS = [
   },
   {
     matchDay: 'MD8',
-    ativa: false,
     periodo: '27 de janeiro de 2027',
     limiteISO: '2027-01-27T17:30:00',
     limiteTexto: 'Quarta-feira, 27/01/2027 às 17H30',
@@ -232,15 +225,30 @@ function comConfig(jornada) {
   return {
     ...CONFIG,
     ...jornada,
+    ativa: jornada.matchDay === matchDayAtivo(),
     totalJogos: jornada.jogos.length,
     resultadosConhecidos: jornada.jogos.filter((j) => j.resultado).length
   };
 }
 
+// A jornada ativa e a primeira cujo prazo de apostas ainda nao passou, mas so
+// avanca para ela quando a anterior tiver todos os resultados lancados. Enquanto
+// a anterior estiver por fechar, mostra-se a anterior (com apostas encerradas).
+// Assim a jornada seguinte abre sozinha, sem editar nada.
+function matchDayAtivo(agora = Date.now()) {
+  for (let i = 0; i < JORNADAS.length; i++) {
+    const j = JORNADAS[i];
+    if (!apostasFechadas(j, agora)) {
+      const anterior = JORNADAS[i - 1];
+      const anteriorFechada = !anterior || anterior.jogos.every((g) => g.resultado);
+      return anteriorFechada ? j.matchDay : anterior.matchDay;
+    }
+  }
+  return JORNADAS[JORNADAS.length - 1].matchDay;
+}
+
 function jornadaAtiva() {
-  const ativa = JORNADAS.find((j) => j.ativa);
-  if (!ativa) throw new Error('Nenhuma jornada marcada com ativa: true em jornadas.js');
-  return comConfig(ativa);
+  return comConfig(JORNADAS.find((j) => j.matchDay === matchDayAtivo()));
 }
 
 function todasAsJornadas() {
