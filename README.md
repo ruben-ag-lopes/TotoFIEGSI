@@ -1,7 +1,7 @@
 # TotoFIEGSI
 
 Webapp do jogo **TotoFIEGSI** da Liga FIEGSI 26/27: boletim de prognósticos 1X2 para os
-10 jogos da jornada da Liga dos Campeões, aposta de valor fixo (2 €) e registo das
+os jogos da jornada da Liga dos Campeões (10 na MD1 a MD3, 18 a partir da MD4), aposta de valor fixo (2 €) e registo das
 apostas numa base de dados Postgres (Supabase). Alojada no Vercel, sem custos.
 
 ---
@@ -10,12 +10,12 @@ apostas numa base de dados Postgres (Supabase). Alojada no Vercel, sem custos.
 
 ### O que faz
 
-- **Landing page com o boletim** (`/`) no estilo do talão do Totobola: os 10 jogos da
+- **Landing page com o boletim** (`/`) no estilo do talão do Totobola: os jogos da
   jornada em linha, com data e hora, e as opções `1` / `X` / `2` para cada um.
 - **Um prognóstico por jogo** — clicar noutro símbolo troca a escolha, clicar no mesmo
   desmarca. Não existem múltiplos prognósticos.
 - **Uma aposta por jogador em cada jornada**, no valor fixo de **2 €**, validada no
-  servidor. O boletim só é submetido com os 10 jogos preenchidos.
+  servidor. O boletim só é submetido com os jogos preenchidos.
 - **Página Jornadas**: os jogos de cada match day, os resultados oficiais e a
   classificação dos jogadores, com cada prognóstico marcado a verde ou vermelho.
 - **Botões `Limpar` e `Apostar`.** Ao carregar em Apostar sem sessão iniciada, o
@@ -181,7 +181,7 @@ Production**.
 | POST   | `/api/registo`        | criar conta (utilizador, equipa, password)         |
 | POST   | `/api/login`          | iniciar sessão                                      |
 | POST   | `/api/logout`         | terminar sessão                                     |
-| POST   | `/api/apostas`        | submeter chaves (valida 10 prognósticos e o limite) |
+| POST   | `/api/apostas`        | submeter chaves (valida um prognóstico por jogo e o limite) |
 | GET    | `/api/minhas-apostas` | apostas do utilizador + quantas ainda pode fazer    |
 
 ---
@@ -202,7 +202,7 @@ create table apostas (
   id         bigint generated always as identity primary key,
   utilizador text not null references utilizadores(utilizador),
   jornada    text not null,      -- match day a que a aposta pertence (ex.: 'MD1')
-  chave      text not null       -- 10 prognósticos separados por ';'
+  chave      text not null       -- um prognóstico por jogo, separados por ';'
 );
 
 create table tentativas_login (   -- limite anti força bruta
@@ -348,7 +348,7 @@ const JORNADAS = [
     limiteTexto: 'Terça-feira, 29/09/2026 às 17H30',
     jogos: [
       { n: 1, casa: 'Equipa A', fora: 'Equipa B', data: '2026-09-29', hora: '20:00', dia: 'Ter', resultado: null },
-      // ... exatamente 10 jogos, numerados de 1 a 10
+      // ... todos os jogos da jornada, numerados de 1 a N (N = 18 a partir da MD4)
     ]
   }
 ];
@@ -363,7 +363,7 @@ não vitalício.
 
 ### 3.3 Regras a respeitar nos jogos
 
-- **10 jogos**, com `n` de 1 a 10 — a ordem define a ordem dos prognósticos na chave
+- **Todos os jogos da jornada**, com `n` de 1 a N (18 na Liga dos Campeões a partir da MD4) — a ordem define a ordem dos prognósticos na chave
   (`1;2;x;...`), por isso é a mesma ordem que usas para conferir os resultados.
 - `data` no formato `AAAA-MM-DD` e `hora` em `HH:MM`; `dia` é a abreviatura mostrada.
 - `limiteISO` é a data/hora a que as apostas fecham (por norma, 17H30 do dia do
@@ -393,7 +393,7 @@ Ficam no objeto `CONFIG`, no topo de `jornadas.js`:
 
 - [ ] resultados da jornada anterior preenchidos
 - [ ] jornada anterior com `ativa: false`
-- [ ] nova jornada com 10 jogos, `ativa: true` e `matchDay` único
+- [ ] nova jornada com todos os jogos da jornada, `ativa: true` e `matchDay` único
 - [ ] `limiteISO` e `limiteTexto` coerentes
 - [ ] servidor reiniciado e página verificada
 

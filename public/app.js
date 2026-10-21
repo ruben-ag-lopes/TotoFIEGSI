@@ -109,6 +109,7 @@ function renderCabecalho() {
   $('info-limite').textContent = limiteLegivel(j);
   $('info-valor').textContent = j.valorAposta.toFixed(2).replace('.', ',') + ' €';
   $('aviso-max').textContent = String(j.maxApostasPorUtilizador);
+  $('aviso-jogos').textContent = j.totalJogos + ' jogos';
 
   const dias = new Set(j.jogos.map((jogo) => jogo.data)).size;
   $('info-dias-competicao').textContent = j.totalJogos + ' jogos · ' +
