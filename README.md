@@ -1,7 +1,7 @@
 # TotoFIEGSI
 
 Webapp do jogo **TotoFIEGSI** da Liga FIEGSI 26/27: boletim de prognósticos 1X2 para os
-os jogos da jornada da Liga dos Campeões (10 na MD1 a MD3, 18 a partir da MD4), aposta de valor fixo (2 €) e registo das
+os jogos da jornada da Liga dos Campeões (10 na MD1 a MD3, 14 a partir da MD4), aposta de valor fixo (2 €) e registo das
 apostas numa base de dados Postgres (Supabase). Alojada no Vercel, sem custos.
 
 ---
@@ -348,7 +348,7 @@ const JORNADAS = [
     limiteTexto: 'Terça-feira, 29/09/2026 às 17H30',
     jogos: [
       { n: 1, casa: 'Equipa A', fora: 'Equipa B', data: '2026-09-29', hora: '20:00', dia: 'Ter', resultado: null },
-      // ... todos os jogos da jornada, numerados de 1 a N (N = 18 a partir da MD4)
+      // ... todos os jogos da jornada, numerados de 1 a N (N = 14 a partir da MD4)
     ]
   }
 ];
@@ -363,7 +363,7 @@ não vitalício.
 
 ### 3.3 Regras a respeitar nos jogos
 
-- **Todos os jogos da jornada**, com `n` de 1 a N (18 na Liga dos Campeões a partir da MD4) — a ordem define a ordem dos prognósticos na chave
+- **Todos os jogos da jornada**, com `n` de 1 a N (14 na Liga dos Campeões a partir da MD4) — a ordem define a ordem dos prognósticos na chave
   (`1;2;x;...`), por isso é a mesma ordem que usas para conferir os resultados.
 - `data` no formato `AAAA-MM-DD` e `hora` em `HH:MM`; `dia` é a abreviatura mostrada.
 - `limiteISO` é a data/hora a que as apostas fecham (por norma, 17H30 do dia do
