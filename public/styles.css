@@ -1238,3 +1238,34 @@ td.td-picks { text-align: center; }
   .tabela-multas td:nth-child(3) { grid-area: valor; }
   .tabela-multas td:nth-child(4) { grid-area: estado; }
 }
+
+/* ---------- Anuncios: edicao de jornal ---------- */
+.jornal {
+  max-width: 880px;
+  margin: 0 auto 28px;
+  background: #fdfbf5;
+  color: #1a1a1a;
+  border: 1px solid #c9c2ad;
+  border-top: 6px double #1a1a1a;
+  border-radius: 4px;
+  padding: 18px 26px 24px;
+  font-family: Georgia, 'Times New Roman', serif;
+  box-shadow: var(--sombra);
+}
+.jornal-cab { text-align: center; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; margin-bottom: 14px; }
+.jornal-data, .jornal-edicao { margin: 0; font-family: 'Segoe UI', Roboto, Arial, sans-serif; font-size: 12px; letter-spacing: .6px; text-transform: uppercase; color: #5b5b5b; }
+.jornal-titulo { margin: 4px 0; font-size: clamp(30px, 6vw, 46px); font-weight: 400; letter-spacing: .5px; }
+.jornal-principal { display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: center; border-bottom: 1px solid #c9c2ad; padding-bottom: 16px; margin-bottom: 14px; }
+.jornal-figura { margin: 0; color: #1a1a1a; }
+.jornal-figura svg { width: 100%; height: auto; display: block; }
+.jornal-principal h3 { margin: 0 0 8px; font-size: clamp(24px, 4.5vw, 34px); line-height: 1.15; font-weight: 700; }
+.jornal-principal p { margin: 0; font-size: 17px; line-height: 1.5; }
+.jornal-colunas { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; border-bottom: 1px solid #c9c2ad; padding-bottom: 14px; margin-bottom: 14px; }
+.jornal-secundario h4, .jornal-duelos h4 { margin: 0 0 6px; font-size: 19px; line-height: 1.25; }
+.jornal-secundario p, .jornal-duelos p { margin: 0; font-size: 15px; line-height: 1.5; }
+@media (max-width: 600px) {
+  .jornal { padding: 14px 16px 18px; }
+  .jornal-principal { grid-template-columns: 1fr; text-align: center; }
+  .jornal-figura { width: 120px; margin: 0 auto; }
+  .jornal-colunas { grid-template-columns: 1fr; }
+}
