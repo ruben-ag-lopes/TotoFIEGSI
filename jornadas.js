@@ -102,8 +102,8 @@ const JORNADAS = [
     limiteISO: '2026-11-03T17:30:00',
     limiteTexto: 'Terça-feira, 03/11/2026 às 17H30',
     jogos: [
-      { n:  1, casa: 'Shakhtar Donetsk',  fora: 'Sporting',          data: '2026-11-03', hora: '17:45', dia: 'Ter', resultado: 2 },
-      { n:  2, casa: 'Galatasaray',       fora: 'Stuttgart',         data: '2026-11-03', hora: '17:45', dia: 'Ter', resultado: 1 },
+      { n:  1, casa: 'Shakhtar Donetsk',  fora: 'Sporting',          data: '2026-11-03', hora: '17:45', dia: 'Ter', resultado: '2' },
+      { n:  2, casa: 'Galatasaray',       fora: 'Stuttgart',         data: '2026-11-03', hora: '17:45', dia: 'Ter', resultado: '1' },
       { n:  3, casa: 'Atlético Madrid',   fora: 'Bayern Munich',     data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: null },
       { n:  4, casa: 'Barcelona',         fora: 'Aston Villa',       data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: null },
       { n:  5, casa: 'Feyenoord',         fora: 'Inter',             data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: null },
