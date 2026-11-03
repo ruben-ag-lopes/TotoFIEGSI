@@ -107,7 +107,7 @@ const JORNADAS = [
       { n:  3, casa: 'Atlético Madrid',   fora: 'Bayern Munich',     data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: '2' },
       { n:  4, casa: 'Barcelona',         fora: 'Aston Villa',       data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: '1' },
       { n:  5, casa: 'Feyenoord',         fora: 'Inter',             data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: '2' },
-      { n:  6, casa: 'Bodø/Glimt',        fora: 'Lille',             data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: 'X' },
+      { n:  6, casa: 'Bodø/Glimt',        fora: 'Lille',             data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: 'x' },
       { n:  7, casa: 'LASK',              fora: 'Slovan Bratislava', data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: '1' },
       { n:  8, casa: 'Manchester United', fora: 'Roma',              data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: '1' },
       { n:  9, casa: 'Villarreal',        fora: 'Paris Saint-Germain', data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: '2' },
