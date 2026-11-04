@@ -111,13 +111,13 @@ const JORNADAS = [
       { n:  7, casa: 'LASK',              fora: 'Slovan Bratislava', data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: '1' },
       { n:  8, casa: 'Manchester United', fora: 'Roma',              data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: '1' },
       { n:  9, casa: 'Villarreal',        fora: 'Paris Saint-Germain', data: '2026-11-03', hora: '20:00', dia: 'Ter', resultado: '2' },
-      { n: 10, casa: 'Fenerbahçe',        fora: 'Liverpool',         data: '2026-11-04', hora: '17:45', dia: 'Qua', resultado: null },
-      { n: 11, casa: 'Borussia Dortmund', fora: 'Real Betis',        data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 12, casa: 'Porto',             fora: 'Napoli',            data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 13, casa: 'PSV Eindhoven',     fora: 'Club Brugge',       data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 14, casa: 'Lens',              fora: 'Como',              data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 15, casa: 'Viking',            fora: 'Sabah',             data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 16, casa: 'Leipzig',           fora: 'Manchester City',   data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: null }
+      { n: 10, casa: 'Fenerbahçe',        fora: 'Liverpool',         data: '2026-11-04', hora: '17:45', dia: 'Qua', resultado: '1' },
+      { n: 11, casa: 'Borussia Dortmund', fora: 'Real Betis',        data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: '1' },
+      { n: 12, casa: 'Porto',             fora: 'Napoli',            data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: '1' },
+      { n: 13, casa: 'PSV Eindhoven',     fora: 'Club Brugge',       data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: '2' },
+      { n: 14, casa: 'Lens',              fora: 'Como',              data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: '2' },
+      { n: 15, casa: 'Viking',            fora: 'Sabah',             data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: '1' },
+      { n: 16, casa: 'Leipzig',           fora: 'Manchester City',   data: '2026-11-04', hora: '20:00', dia: 'Qua', resultado: '2' }
     ]
   },
   {
