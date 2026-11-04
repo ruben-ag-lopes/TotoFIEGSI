@@ -90,7 +90,11 @@ function descreverChave(chave) {
   console.log('');
   console.log('--- escrita (a chave ignora o RLS?) ---');
 
-  const ipTeste = '0.0.0.0-teste-de-ligacao';
+  const ipTeste = 'teste-ligacao-' + Date.now();  // nunca colide com um IP real
+  const apagarTeste = () => fetch(SUPABASE_URL + '/rest/v1/tentativas_login?ip=eq.' + encodeURIComponent(ipTeste), {
+    method: 'DELETE',
+    headers: cabecalhos
+  });
   try {
     const r = await fetch(SUPABASE_URL + '/rest/v1/tentativas_login', {
       method: 'POST',
@@ -101,6 +105,7 @@ function descreverChave(chave) {
     if (!r.ok) {
       const texto = await r.text();
       console.log(vermelho('nao consegui escrever: HTTP ' + r.status + ' — ' + texto.slice(0, 200)));
+      await apagarTeste();
       console.log('');
       console.log('Isto e o sintoma tipico de estares a usar a chave PUBLICA (anon /');
       console.log('publishable): o RLS bloqueia-a, tal como deve. Vai a');
@@ -110,10 +115,7 @@ function descreverChave(chave) {
 
     console.log(verde('escrita permitida — a chave ignora o RLS, e a certa'));
 
-    await fetch(SUPABASE_URL + '/rest/v1/tentativas_login?ip=eq.' + encodeURIComponent(ipTeste), {
-      method: 'DELETE',
-      headers: cabecalhos
-    });
+    await apagarTeste();
     console.log(verde('linha de teste apagada — nao ficou lixo'));
   } catch (err) {
     console.log(vermelho('erro na escrita: ' + err.message));
@@ -121,8 +123,7 @@ function descreverChave(chave) {
   }
 
   console.log('');
-  console.log('Tudo pronto. Podes correr a migracao:');
-  console.log('  node --env-file=.env migrar.js');
+  console.log('Tudo pronto. A ligacao esta bem.');
   console.log('');
 })().catch((err) => {
   console.error('');

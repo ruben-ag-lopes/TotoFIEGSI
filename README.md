@@ -47,7 +47,7 @@ que é hoje o vetor mais comum de comprometimento em apps Node.
 | Base de dados | Supabase (Postgres, plano Free) | grátis |
 | Endereço | `totofiegsi.vercel.app` | grátis |
 
-Requer **Node 20 ou superior** (para o `fetch` nativo).
+Requer **Node 22** (o `engines` do `package.json`).
 
 ### Estrutura
 
@@ -69,7 +69,6 @@ public/          frontend (servido como estático pelo Vercel)
 jornadas.js      TODAS as jornadas: jogos e resultados  <-- é aqui que se muda tudo
 jornada.js       atalho para a jornada ativa (calculada sozinha)
 server.js        servidor local, para desenvolvimento
-migrar.js        migração única do SQLite antigo para o Supabase
 apostas.js       utilitário de consulta pelo terminal
 ```
 
@@ -418,20 +417,7 @@ Custo total: **0 €**. Endereço: `https://totofiegsi.vercel.app`.
 5. **Settings → Domains** → o domínio pode ser mudado para `totofiegsi.vercel.app`
    (se estiver livre).
 
-### 4.3 Migrar os dados do SQLite antigo
-
-Uma única vez, com o `.env` preenchido localmente:
-
-```bash
-node --env-file=.env migrar.js              # mostra o que vai migrar, sem escrever
-node --env-file=.env migrar.js --escrever   # migra a sério
-```
-
-Leva os utilizadores e as apostas do `totofiegsi.db` para o Supabase. Pode ser
-corrido mais do que uma vez sem duplicar nada. O `totofiegsi.db` fica intacto no
-disco, como cópia de segurança.
-
-### 4.4 Domínio próprio (opcional, ~1 €/ano)
+### 4.3 Domínio próprio (opcional, ~1 €/ano)
 
 O `totofiegsi.vercel.app` é gratuito e chega perfeitamente. Se um dia quiseres um
 domínio teu (`totofiegsi.pt`, `.com`, `.xyz`):
@@ -444,7 +430,7 @@ domínio teu (`totofiegsi.pt`, `.com`, `.xyz`):
 O Cloudflare só entra se quiseres gerir o DNS lá — com o subdomínio do Vercel, ou
 até com domínio próprio apontado diretamente ao Vercel, não é preciso.
 
-### 4.5 O que mudou na segurança com esta migração
+### 4.4 O que mudou na segurança com esta migração
 
 | | Antes (PC + túnel) | Agora (Vercel + Supabase) |
 |---|---|---|
@@ -605,8 +591,7 @@ git commit -m "descrição da alteração"
 git push
 ```
 
-O ficheiro `totofiegsi.db` está no `.gitignore` — os dados dos jogadores **não** vão
-para o GitHub. A imagem de referência do talão original também fica de fora.
+Os dados dos jogadores estão só no Supabase; nada de base de dados vai para o GitHub.
 
 ---
 

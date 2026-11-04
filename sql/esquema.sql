@@ -15,8 +15,12 @@ create table if not exists apostas (
   id         bigint generated always as identity primary key,
   utilizador text not null references utilizadores(utilizador),
   jornada    text not null,           -- match day a que a aposta pertence (ex.: 'MD1')
-  chave      text not null            -- 10 prognósticos separados por ';'
+  chave      text not null            -- um prognóstico por jogo, separados por ';'
 );
+
+-- Uma aposta por jogador em cada jornada (MAX_APOSTAS = 1). Se o limite subir,
+-- esta restrição tem de ser retirada.
+create unique index if not exists apostas_um_por_jornada on apostas (utilizador, jornada);
 
 -- Procuras mais frequentes: apostas de uma jornada, e de um jogador numa jornada.
 create index if not exists apostas_jornada_idx on apostas (jornada);

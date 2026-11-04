@@ -1,31 +1,17 @@
-# SEGREDOS - chaves do Supabase e segredo das sessoes. Nunca vao para o GitHub.
-.env
-.env.local
-.env.*.local
+# segredos: chaves do Supabase e segredo das sessoes. Nunca vao para o GitHub.
+.env*
+!.env.exemplo
 
-# base de dados real (dados e passwords dos jogadores) - fica so na tua maquina
-/totofiegsi.db
-/totofiegsi.db-shm
-/totofiegsi.db-wal
-/totofiegsi.db-journal
+# ficheiros locais antigos (SQLite e imagem de referencia): ficam so no teu computador
+/totofiegsi.db*
 /jornadas/
-
-# projeto do DB Browser (preferencias locais)
 *.sqbpro
+template_exemplo_totoFIEGSI.png
 
 # pasta local do Vercel
 .vercel
-
-# a base de dados de exemplo (exemplo/totofiegsi.exemplo.db) VAI para o repositorio,
-# para os colegas terem dados com que experimentar
-
-# imagem de referencia do talao original
-template_exemplo_totoFIEGSI.png
 
 node_modules/
 *.log
 .DS_Store
 Thumbs.db
-
-.vercel
-.env*

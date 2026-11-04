@@ -400,20 +400,7 @@ function renderMinhasApostas() {
 }
 
 function renderSessao() {
-  const el = $('estado-sessao');
-  const sair = $('btn-sair');
-  if (estado.sessao.autenticado) {
-    el.innerHTML = '';
-    el.append('Sessão: ');
-    const s = document.createElement('strong');
-    s.textContent = estado.sessao.utilizador;
-    el.appendChild(s);
-    if (estado.sessao.equipa) el.append(' (' + estado.sessao.equipa + ')');
-    sair.hidden = false;
-  } else {
-    el.textContent = 'Sem sessão iniciada';
-    sair.hidden = true;
-  }
+  pintarSessao(estado.sessao);
 }
 
 /* ---------- contagem decrescente ate ao limite ---------- */
