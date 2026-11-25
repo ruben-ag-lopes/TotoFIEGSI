@@ -135,13 +135,13 @@ const JORNADAS = [
       { n:  7, casa: 'Como',              fora: 'AEK Athens',        data: '2026-11-24', hora: '20:00', dia: 'Ter', resultado: '1' },
       { n:  8, casa: 'Real Madrid',       fora: 'PSV Eindhoven',     data: '2026-11-24', hora: '20:00', dia: 'Ter', resultado: '1' },
       { n:  9, casa: 'Slovan Bratislava', fora: 'Real Betis',        data: '2026-11-24', hora: '20:00', dia: 'Ter', resultado: '2' },
-      { n: 10, casa: 'Slavia Praha',      fora: 'Villarreal',        data: '2026-11-25', hora: '17:45', dia: 'Qua', resultado: null },
-      { n: 11, casa: 'Sporting',          fora: 'Manchester United', data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 12, casa: 'Inter',             fora: 'Stuttgart',         data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 13, casa: 'Shakhtar Donetsk',  fora: 'Fenerbahçe',        data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 14, casa: 'Lille',             fora: 'Bayern Munich',     data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 15, casa: 'Paris Saint-Germain', fora: 'Roma',              data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: null },
-      { n: 16, casa: 'Club Brugge',       fora: 'Liverpool',         data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: null }
+      { n: 10, casa: 'Slavia Praha',      fora: 'Villarreal',        data: '2026-11-25', hora: '17:45', dia: 'Qua', resultado: '2' },
+      { n: 11, casa: 'Sporting',          fora: 'Manchester United', data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: 'x' },
+      { n: 12, casa: 'Inter',             fora: 'Stuttgart',         data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: '1' },
+      { n: 13, casa: 'Shakhtar Donetsk',  fora: 'Fenerbahçe',        data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: '2' },
+      { n: 14, casa: 'Lille',             fora: 'Bayern Munich',     data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: '1' },
+      { n: 15, casa: 'Paris Saint-Germain', fora: 'Roma',              data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: 'x' },
+      { n: 16, casa: 'Club Brugge',       fora: 'Liverpool',         data: '2026-11-25', hora: '20:00', dia: 'Qua', resultado: '2' }
     ]
   },
   {
